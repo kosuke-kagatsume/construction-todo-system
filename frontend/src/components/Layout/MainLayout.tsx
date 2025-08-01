@@ -3,7 +3,7 @@ import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButto
 import { Dashboard, Assignment, People, Settings, Menu as MenuIcon } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
-const drawerWidth = 240;
+const drawerWidth = 200;
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -26,20 +26,40 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
+      <Toolbar sx={{ backgroundColor: '#217346', color: 'white' }}>
+        <Typography 
+          variant="body1" 
+          noWrap 
+          component="div"
+          sx={{ fontFamily: '"メイリオ", "Meiryo", sans-serif', fontWeight: 'bold' }}
+        >
           建築TODO管理
         </Typography>
       </Toolbar>
-      <List>
+      <List sx={{ backgroundColor: '#f5f5f5', height: '100%' }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={router.pathname === item.path}
               onClick={() => router.push(item.path)}
+              sx={{
+                '&.Mui-selected': {
+                  backgroundColor: '#e3f2e3',
+                  borderLeft: '3px solid #217346',
+                },
+                '&:hover': {
+                  backgroundColor: '#e8e8e8',
+                },
+              }}
             >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+              <ListItemIcon sx={{ minWidth: 40, color: '#217346' }}>{item.icon}</ListItemIcon>
+              <ListItemText 
+                primary={item.text} 
+                primaryTypographyProps={{
+                  fontSize: '14px',
+                  fontFamily: '"メイリオ", "Meiryo", sans-serif',
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
@@ -54,9 +74,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: '48px !important' }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -66,8 +89,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Construction Todo System
+          <Typography 
+            variant="body1" 
+            noWrap 
+            component="div"
+            sx={{ fontFamily: '"メイリオ", "Meiryo", sans-serif' }}
+          >
+            Construction Todo System - 建築工事管理システム
           </Typography>
         </Toolbar>
       </AppBar>
@@ -104,9 +132,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 2,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
+          mt: 6,
+          backgroundColor: '#fafafa',
+          minHeight: '100vh',
         }}
       >
         {children}

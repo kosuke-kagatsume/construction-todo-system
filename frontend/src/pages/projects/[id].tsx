@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { ProjectDetail } from '@/components/Project/ProjectDetail';
+import { ProjectDetailExcel } from '@/components/Project/ProjectDetailExcel';
 import { Box, Typography, IconButton, Breadcrumbs, Link } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import NextLink from 'next/link';
@@ -12,25 +12,33 @@ export default function ProjectDetailPage() {
 
   return (
     <MainLayout>
-      <Box sx={{ mb: 3 }}>
-        <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
-          <Link component={NextLink} href="/" color="inherit">
+      <Box sx={{ mb: 2 }}>
+        <Breadcrumbs 
+          aria-label="breadcrumb" 
+          sx={{ 
+            mb: 1, 
+            fontSize: '12px',
+            '& .MuiBreadcrumbs-separator': { fontSize: '12px' },
+          }}
+        >
+          <Link 
+            component={NextLink} 
+            href="/" 
+            color="inherit"
+            sx={{ fontSize: '12px', fontFamily: '"メイリオ", "Meiryo", sans-serif' }}
+          >
             現場ボード
           </Link>
-          <Typography color="text.primary">プロジェクト詳細</Typography>
-        </Breadcrumbs>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => router.back()}>
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h4" component="h1">
-            田中邸 {/* 実際はAPIから取得 */}
+          <Typography 
+            color="text.primary" 
+            sx={{ fontSize: '12px', fontFamily: '"メイリオ", "Meiryo", sans-serif' }}
+          >
+            プロジェクト詳細
           </Typography>
-        </Box>
+        </Breadcrumbs>
       </Box>
       
-      <ProjectDetail projectId={id as string} />
+      <ProjectDetailExcel projectId={id as string} />
     </MainLayout>
   );
 }
