@@ -50,9 +50,9 @@ const FixedColumn = styled('div')({
   position: 'sticky',
   left: 0,
   zIndex: 2,
-  backgroundColor: '#f5f5f5',
-  borderRight: '2px solid #d0d0d0',
-  minWidth: '300px',
+  backgroundColor: '#f8f9fa',
+  borderRight: '2px solid #e0e0e0',
+  minWidth: '330px',
   overflowY: 'auto',
   overflowX: 'hidden',
 });
@@ -85,7 +85,7 @@ const GridCell = styled('div')<{ width?: number; isHeader?: boolean; isFixed?: b
     borderRight: '1px solid #e0e0e0',
     fontSize: '12px',
     fontFamily: '"メイリオ", "Meiryo", sans-serif',
-    backgroundColor: isHeader ? '#217346' : isFixed ? '#f5f5f5' : '#ffffff',
+    backgroundColor: isHeader ? '#1976d2' : isFixed ? '#f8f9fa' : '#ffffff',
     color: isHeader ? '#ffffff' : '#000000',
     fontWeight: isHeader ? 'bold' : 'normal',
     display: 'flex',
@@ -111,16 +111,16 @@ const PhaseHeader = styled('div')<{ color: string }>(({ color }) => ({
 
 const StatusCell = styled(GridCell)<{ status?: string }>(({ status }) => ({
   backgroundColor: 
-    status === 'COMPLETED' ? '#d4edda' :
-    status === 'IN_PROGRESS' ? '#cce5ff' :
-    status === 'DELAYED' ? '#f8d7da' :
+    status === 'COMPLETED' ? '#e8f5e9' :
+    status === 'IN_PROGRESS' ? '#e3f2fd' :
+    status === 'DELAYED' ? '#ffebee' :
     '#ffffff',
   color:
-    status === 'COMPLETED' ? '#155724' :
-    status === 'IN_PROGRESS' ? '#004085' :
-    status === 'DELAYED' ? '#721c24' :
+    status === 'COMPLETED' ? '#2e7d32' :
+    status === 'IN_PROGRESS' ? '#1565c0' :
+    status === 'DELAYED' ? '#c62828' :
     '#000000',
-  fontWeight: status ? 'bold' : 'normal',
+  fontWeight: status ? '500' : 'normal',
 }));
 
 // タブスタイル
@@ -602,20 +602,51 @@ export const ConstructionBoardExcel: React.FC = () => {
         </ExcelGrid>
       </ExcelContainer>
 
-      {/* 凡例 */}
-      <Box sx={{ mt: 2, display: 'flex', gap: 2, justifyContent: 'center', fontSize: '12px' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 20, height: 12, backgroundColor: '#d4edda', border: '1px solid #c3e6cb' }} />
-          <Typography variant="caption">完了</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 20, height: 12, backgroundColor: '#cce5ff', border: '1px solid #b8daff' }} />
-          <Typography variant="caption">進行中</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 20, height: 12, backgroundColor: '#f8d7da', border: '1px solid #f5c6cb' }} />
-          <Typography variant="caption">遅延</Typography>
-        </Box>
+      {/* 凡例と統計 */}
+      <Box sx={{ mt: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              <Typography variant="body2" fontWeight="medium">ステータス:</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 16, height: 16, backgroundColor: '#e8f5e9', border: '1px solid #4caf50', borderRadius: '2px' }} />
+                <Typography variant="caption">完了</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 16, height: 16, backgroundColor: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '2px' }} />
+                <Typography variant="caption">進行中</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 16, height: 16, backgroundColor: '#ffebee', border: '1px solid #f44336', borderRadius: '2px' }} />
+                <Typography variant="caption">遅延</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 16, height: 16, backgroundColor: '#ffeb3b', border: '1px solid #f9a825', borderRadius: '2px' }} />
+                <Typography variant="caption">重要マイルストーン</Typography>
+              </Box>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="primary">{filteredProjects.length}</Typography>
+                <Typography variant="caption" color="text.secondary">プロジェクト</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="success.main">
+                  {filteredProjects.filter(p => p.status === 'IN_PROGRESS').length}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">進行中</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="error.main">
+                  {filteredProjects.filter(p => p.delayRisk === 'high').length}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">遅延リスク高</Typography>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );

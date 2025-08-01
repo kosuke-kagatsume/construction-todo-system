@@ -646,11 +646,11 @@ export const mockProjects: ProjectData[] = [
 
 // フェーズとステージの定義
 export const phases = [
-  { id: '1', name: '追客・設計', color: '#2196F3', stages: 6 },
-  { id: '2', name: '契約', color: '#4CAF50', stages: 3 },
-  { id: '3', name: '打ち合わせ', color: '#FF9800', stages: 10 },
-  { id: '4', name: '施工', color: '#F44336', stages: 17 },
-  { id: '5', name: '竣工', color: '#9C27B0', stages: 4 },
+  { id: '1', name: '追客・設計', color: '#3b82f6', stages: 6 },
+  { id: '2', name: '契約', color: '#10b981', stages: 3 },
+  { id: '3', name: '打ち合わせ', color: '#f59e0b', stages: 10 },
+  { id: '4', name: '施工', color: '#ef4444', stages: 17 },
+  { id: '5', name: '竣工', color: '#8b5cf6', stages: 4 },
 ];
 
 export const allStages = [

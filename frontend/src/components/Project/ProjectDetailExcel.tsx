@@ -261,7 +261,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
       {/* タスク一覧タブ */}
       <TabPanel value={tabValue} index={0}>
         {/* タスクフィルター */}
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <TextField
             size="small"
             placeholder="タスクを検索..."
@@ -277,7 +277,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
             sx={{ minWidth: 250 }}
           />
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flex: 1 }}>
             <Chip
               label="すべて"
               onClick={() => setTaskFilter('all')}
@@ -309,219 +309,358 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
               variant={taskFilter === 'delayed' ? 'filled' : 'outlined'}
             />
           </Box>
+          
+          <Typography variant="body2" color="text.secondary">
+            {tasks.length} 件のタスク
+          </Typography>
         </Box>
         
-        <Grid container spacing={2}>
-          {tasks.map((task) => (
-            <Grid item xs={12} key={task.id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <CheckCircle 
-                          color={task.status === 'completed' ? 'success' : 'disabled'} 
-                          fontSize="small"
-                        />
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {task.stageName}
-                        </Typography>
-                        {task.priority === 'high' && (
-                          <Chip label="重要" color="error" size="small" />
-                        )}
-                      </Box>
-                      
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {task.description}
-                      </Typography>
-                      
-                      <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          担当: {task.assignee}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          期限: {task.dueDate ? format(new Date(task.dueDate), 'yyyy/MM/dd', { locale: ja }) : '未設定'}
-                        </Typography>
-                        {task.completedDate && (
-                          <Typography variant="caption" color="success.main">
-                            完了: {task.completedDate}
-                          </Typography>
-                        )}
-                      </Box>
-                      
-                      {/* チェックリスト */}
-                      {task.checklist.length > 0 && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            チェックリスト ({task.checklist.filter(c => c.completed).length}/{task.checklist.length})
-                          </Typography>
-                          <List dense sx={{ mt: 0 }}>
-                            {task.checklist.map((item) => (
-                              <ListItem key={item.id} sx={{ py: 0 }}>
-                                <ListItemIcon sx={{ minWidth: 32 }}>
-                                  <Checkbox 
-                                    checked={item.completed} 
-                                    size="small"
-                                    disabled={task.status === 'completed'}
-                                  />
-                                </ListItemIcon>
-                                <ListItemText 
-                                  primary={item.text}
-                                  primaryTypographyProps={{ variant: 'body2' }}
-                                />
-                              </ListItem>
-                            ))}
-                          </List>
-                        </Box>
-                      )}
-                      
-                      {/* コメント */}
-                      {task.comments.length > 0 && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" color="text.secondary" gutterBottom>
-                            コメント ({task.comments.length})
-                          </Typography>
-                          {task.comments.map((comment) => (
-                            <Box key={comment.id} sx={{ mt: 1, p: 1, backgroundColor: 'grey.50', borderRadius: 1 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Typography variant="caption" fontWeight="bold">
-                                  {comment.author}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {format(new Date(comment.timestamp), 'MM/dd HH:mm', { locale: ja })}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2">
-                                {comment.text}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                      )}
-                      
-                      {/* 添付ファイル */}
-                      {task.attachments.length > 0 && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" color="text.secondary" gutterBottom>
-                            添付ファイル ({task.attachments.length})
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
-                            {task.attachments.map((file) => (
-                              <Chip
-                                key={file.id}
-                                icon={<AttachFile />}
-                                label={`${file.name} (${file.size})`}
-                                size="small"
-                                variant="outlined"
-                                onClick={() => {}}
-                              />
-                            ))}
-                          </Box>
-                        </Box>
-                      )}
-                    </Box>
-                    
-                    <Box>
-                      <Chip
-                        label={
-                          task.status === 'completed' ? '完了' :
-                          task.status === 'in_progress' ? '進行中' :
-                          task.status === 'delayed' ? '遅延' :
-                          '未着手'
-                        }
-                        color={
-                          task.status === 'completed' ? 'success' :
-                          task.status === 'in_progress' ? 'primary' :
-                          task.status === 'delayed' ? 'error' :
-                          'default'
-                        }
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </TabPanel>
-      
-      {/* フェーズ別表示タブ */}
-      <TabPanel value={tabValue} index={1}>
-        {phases.map((phase) => {
-          const phaseTasks = tasks.filter(t => {
-            const stageIndex = allStages.indexOf(t.stageName);
-            let startIndex = 0;
-            for (let i = 0; i < parseInt(phase.id) - 1; i++) {
-              startIndex += phases[i].stages;
-            }
-            const endIndex = startIndex + phase.stages;
-            return stageIndex >= startIndex && stageIndex < endIndex;
-          });
-          
-          const completedCount = phaseTasks.filter(t => t.status === 'completed').length;
-          const phaseProgress = phaseTasks.length > 0 ? Math.round((completedCount / phaseTasks.length) * 100) : 0;
-          
-          return (
-            <Card key={phase.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: phase.color }}>
+        {/* タスクリスト改善版 */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {phases.map((phase) => {
+            const phaseTasks = tasks.filter(t => {
+              const stageIndex = allStages.indexOf(t.stageName);
+              let startIndex = 0;
+              for (let i = 0; i < parseInt(phase.id) - 1; i++) {
+                startIndex += phases[i].stages;
+              }
+              const endIndex = startIndex + phase.stages;
+              return stageIndex >= startIndex && stageIndex < endIndex;
+            });
+            
+            if (phaseTasks.length === 0) return null;
+            
+            return (
+              <Box key={phase.id}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  mb: 1,
+                  p: 1,
+                  backgroundColor: phase.color + '10',
+                  borderRadius: 1,
+                  borderLeft: `4px solid ${phase.color}`,
+                }}>
+                  <Typography 
+                    variant="subtitle2" 
+                    sx={{ color: phase.color, fontWeight: 'bold' }}
+                  >
                     {phase.name}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2">
-                      {completedCount}/{phaseTasks.length} 完了
-                    </Typography>
-                    <Box sx={{ width: 100 }}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={phaseProgress}
-                        sx={{ 
-                          height: 6,
-                          backgroundColor: 'grey.200',
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: phase.color
-                          }
-                        }}
-                      />
-                    </Box>
-                  </Box>
+                  <Chip 
+                    label={`${phaseTasks.filter(t => t.status === 'completed').length}/${phaseTasks.length}`}
+                    size="small"
+                    sx={{ height: 20, fontSize: '11px' }}
+                  />
                 </Box>
                 
-                <Grid container spacing={1}>
+                <Grid container spacing={1.5}>
                   {phaseTasks.map((task) => (
-                    <Grid item xs={12} sm={6} md={4} key={task.id}>
-                      <Box
-                        sx={{
-                          p: 1.5,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          backgroundColor: task.status === 'completed' ? 'success.50' : 'background.paper',
-                          opacity: task.status === 'completed' ? 0.8 : 1,
+                    <Grid item xs={12} md={6} lg={4} key={task.id}>
+                      <Card 
+                        sx={{ 
+                          height: '100%',
+                          borderLeft: `3px solid ${
+                            task.status === 'completed' ? '#4caf50' :
+                            task.status === 'in_progress' ? '#2196f3' :
+                            task.status === 'delayed' ? '#f44336' :
+                            '#e0e0e0'
+                          }`,
+                          '&:hover': {
+                            boxShadow: 3,
+                            transform: 'translateY(-2px)',
+                            transition: 'all 0.2s',
+                          },
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <CheckCircle 
-                            color={task.status === 'completed' ? 'success' : 'disabled'} 
-                            sx={{ fontSize: 16 }}
-                          />
-                          <Typography variant="body2" fontWeight="medium">
-                            {task.stageName}
-                          </Typography>
-                        </Box>
-                        <Typography variant="caption" color="text.secondary">
-                          {task.assignee} | {task.dueDate ? format(new Date(task.dueDate), 'MM/dd') : '未定'}
-                        </Typography>
-                      </Box>
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+                              <CheckCircle 
+                                sx={{ 
+                                  fontSize: 18,
+                                  color: task.status === 'completed' ? 'success.main' : 'grey.400'
+                                }} 
+                              />
+                              <Typography variant="body1" fontWeight="medium" sx={{ fontSize: '14px' }}>
+                                {task.stageName}
+                              </Typography>
+                            </Box>
+                            {task.priority === 'high' && (
+                              <Box 
+                                sx={{ 
+                                  width: 8, 
+                                  height: 8, 
+                                  borderRadius: '50%', 
+                                  backgroundColor: 'error.main',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Avatar sx={{ width: 20, height: 20, fontSize: '10px', bgcolor: 'primary.main' }}>
+                              {task.assignee[0]}
+                            </Avatar>
+                            <Typography variant="caption" color="text.secondary">
+                              {task.assignee}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              • {task.dueDate ? format(new Date(task.dueDate), 'MM/dd') : '期限未定'}
+                            </Typography>
+                          </Box>
+                          
+                          {task.checklist.length > 0 && (
+                            <Box sx={{ mb: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={(task.checklist.filter(c => c.completed).length / task.checklist.length) * 100}
+                                sx={{ height: 4, borderRadius: 2 }}
+                              />
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
+                                チェック: {task.checklist.filter(c => c.completed).length}/{task.checklist.length}
+                              </Typography>
+                            </Box>
+                          )}
+                          
+                          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                            {task.comments.length > 0 && (
+                              <Chip
+                                icon={<Comment sx={{ fontSize: 14 }} />}
+                                label={task.comments.length}
+                                size="small"
+                                sx={{ height: 20, fontSize: '11px' }}
+                              />
+                            )}
+                            {task.attachments.length > 0 && (
+                              <Chip
+                                icon={<AttachFile sx={{ fontSize: 14 }} />}
+                                label={task.attachments.length}
+                                size="small"
+                                sx={{ height: 20, fontSize: '11px' }}
+                              />
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
                     </Grid>
                   ))}
                 </Grid>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </Box>
+            );
+          })}
+        </Box>
+      </TabPanel>
+      
+      {/* フェーズ別表示タブ - カンバンスタイル */}
+      <TabPanel value={tabValue} index={1}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          overflowX: 'auto',
+          pb: 2,
+          minHeight: '600px',
+        }}>
+          {phases.map((phase) => {
+            const phaseTasks = tasks.filter(t => {
+              const stageIndex = allStages.indexOf(t.stageName);
+              let startIndex = 0;
+              for (let i = 0; i < parseInt(phase.id) - 1; i++) {
+                startIndex += phases[i].stages;
+              }
+              const endIndex = startIndex + phase.stages;
+              return stageIndex >= startIndex && stageIndex < endIndex;
+            });
+            
+            const completedCount = phaseTasks.filter(t => t.status === 'completed').length;
+            const phaseProgress = phaseTasks.length > 0 ? Math.round((completedCount / phaseTasks.length) * 100) : 0;
+            
+            return (
+              <Paper 
+                key={phase.id} 
+                sx={{ 
+                  minWidth: 320,
+                  maxWidth: 320,
+                  backgroundColor: 'grey.50',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+                elevation={0}
+              >
+                {/* フェーズヘッダー */}
+                <Box sx={{ 
+                  p: 2, 
+                  backgroundColor: phase.color,
+                  color: 'white',
+                }}>
+                  <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 'bold', mb: 1 }}>
+                    {phase.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      {completedCount}/{phaseTasks.length} タスク完了
+                    </Typography>
+                    <Chip 
+                      label={`${phaseProgress}%`}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        fontWeight: 'bold',
+                      }}
+                    />
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={phaseProgress}
+                    sx={{ 
+                      mt: 1,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255,255,255,0.3)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: 'white',
+                      }
+                    }}
+                  />
+                </Box>
+                
+                {/* タスクリスト */}
+                <Box sx={{ 
+                  flex: 1, 
+                  overflowY: 'auto',
+                  p: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                }}>
+                  {phaseTasks.map((task) => (
+                    <Card 
+                      key={task.id}
+                      sx={{ 
+                        backgroundColor: 'white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                        {/* タスク名とステータス */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'start', gap: 1, flex: 1 }}>
+                            <CheckCircle 
+                              sx={{ 
+                                fontSize: 20,
+                                color: task.status === 'completed' ? 'success.main' : 'grey.300',
+                                mt: 0.2,
+                              }} 
+                            />
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
+                                {task.stageName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ 
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}>
+                                {task.description}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {task.priority === 'high' && (
+                            <Chip 
+                              label="重要" 
+                              size="small" 
+                              sx={{ 
+                                height: 18,
+                                fontSize: '10px',
+                                backgroundColor: 'error.main',
+                                color: 'white',
+                              }} 
+                            />
+                          )}
+                        </Box>
+                        
+                        {/* 担当者と期限 */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>
+                              {task.assignee[0]}
+                            </Avatar>
+                            <Typography variant="caption" color="text.secondary">
+                              {task.assignee}
+                            </Typography>
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {task.dueDate ? format(new Date(task.dueDate), 'MM/dd') : '未定'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        
+                        {/* プログレスバー */}
+                        {task.checklist.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="caption" color="text.secondary">
+                                チェックリスト
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {task.checklist.filter(c => c.completed).length}/{task.checklist.length}
+                              </Typography>
+                            </Box>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={(task.checklist.filter(c => c.completed).length / task.checklist.length) * 100}
+                              sx={{ 
+                                height: 6, 
+                                borderRadius: 3,
+                                backgroundColor: 'grey.200',
+                              }}
+                            />
+                          </Box>
+                        )}
+                        
+                        {/* メタ情報 */}
+                        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                          {task.comments.length > 0 && (
+                            <Chip
+                              icon={<Comment sx={{ fontSize: 14 }} />}
+                              label={task.comments.length}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: '11px' }}
+                            />
+                          )}
+                          {task.attachments.length > 0 && (
+                            <Chip
+                              icon={<AttachFile sx={{ fontSize: 14 }} />}
+                              label={task.attachments.length}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: '11px' }}
+                            />
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
       </TabPanel>
       
       {/* 活動履歴タブ */}
