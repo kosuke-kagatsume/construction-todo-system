@@ -6,15 +6,17 @@ import { Typography, Box } from '@mui/material';
 export default function HomePage() {
   return (
     <MainLayout>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h1" gutterBottom sx={{ fontFamily: '"メイリオ", "Meiryo", sans-serif' }}>
-          現場ボード
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px' }}>
-          全プロジェクトの進捗状況を一覧で確認できます
-        </Typography>
+      <Box className="fade-in">
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+            現場ボード
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            全プロジェクトの進捗状況を一覧で確認できます
+          </Typography>
+        </Box>
+        <ConstructionBoardExcel />
       </Box>
-      <ConstructionBoardExcel />
     </MainLayout>
   );
 }

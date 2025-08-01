@@ -1,35 +1,11 @@
 import type { AppProps } from 'next/app';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // import { LocalizationProvider } from '@mui/x-date-pickers';
 // import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ja from 'date-fns/locale/ja';
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#2196F3',
-    },
-    secondary: {
-      main: '#FF9800',
-    },
-    background: {
-      default: '#f5f5f5',
-    },
-  },
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Hiragino Sans"',
-      '"Noto Sans CJK JP"',
-      'sans-serif',
-    ].join(','),
-  },
-});
+import { theme } from '@/styles/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {

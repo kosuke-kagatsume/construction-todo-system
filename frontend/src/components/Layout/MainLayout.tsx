@@ -1,9 +1,39 @@
 import React from 'react';
-import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton } from '@mui/material';
-import { Dashboard, Assignment, People, Settings, Menu as MenuIcon } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Badge, Tooltip, Divider } from '@mui/material';
+import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notifications, AccountCircle, Construction } from '@mui/icons-material';
 import { useRouter } from 'next/router';
+import { styled } from '@mui/material/styles';
 
-const drawerWidth = 200;
+const drawerWidth = 260;
+
+const StyledBadge = styled(Badge)(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    backgroundColor: '#44b700',
+    color: '#44b700',
+    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+    '&::after': {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      borderRadius: '50%',
+      animation: 'ripple 1.2s infinite ease-in-out',
+      border: '1px solid currentColor',
+      content: '""',
+    },
+  },
+  '@keyframes ripple': {
+    '0%': {
+      transform: 'scale(.8)',
+      opacity: 1,
+    },
+    '100%': {
+      transform: 'scale(2.4)',
+      opacity: 0,
+    },
+  },
+}));
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -25,46 +55,93 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   ];
 
   const drawer = (
-    <div>
-      <Toolbar sx={{ backgroundColor: '#217346', color: 'white' }}>
-        <Typography 
-          variant="body1" 
-          noWrap 
-          component="div"
-          sx={{ fontFamily: '"メイリオ", "Meiryo", sans-serif', fontWeight: 'bold' }}
-        >
-          建築TODO管理
-        </Typography>
-      </Toolbar>
-      <List sx={{ backgroundColor: '#f5f5f5', height: '100%' }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ 
+        p: 3, 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+      }}>
+        <Construction sx={{ fontSize: 32 }} />
+        <Box>
+          <Typography 
+            variant="h6" 
+            sx={{ fontWeight: 700, letterSpacing: '0.5px' }}
+          >
+            建築TODO管理
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+            Construction Management
+          </Typography>
+        </Box>
+      </Box>
+      <List sx={{ flex: 1, px: 2, py: 3 }}>
+        {menuItems.map((item, index) => (
+          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
               selected={router.pathname === item.path}
               onClick={() => router.push(item.path)}
               sx={{
+                borderRadius: 2,
+                transition: 'all 0.3s',
                 '&.Mui-selected': {
-                  backgroundColor: '#e3f2e3',
-                  borderLeft: '3px solid #217346',
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
                 },
                 '&:hover': {
-                  backgroundColor: '#e8e8e8',
+                  backgroundColor: 'action.hover',
+                  transform: 'translateX(4px)',
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 40, color: '#217346' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
               <ListItemText 
                 primary={item.text} 
                 primaryTypographyProps={{
                   fontSize: '14px',
-                  fontFamily: '"メイリオ", "Meiryo", sans-serif',
+                  fontWeight: router.pathname === item.path ? 600 : 400,
                 }}
               />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-    </div>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          p: 2,
+          borderRadius: 2,
+          backgroundColor: 'action.hover',
+        }}>
+          <StyledBadge
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            variant="dot"
+          >
+            <Avatar sx={{ width: 32, height: 32 }}>山</Avatar>
+          </StyledBadge>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" fontWeight={600}>
+              山田太郎
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              営業部
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 
   return (
@@ -74,12 +151,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          backgroundColor: '#ffffff',
-          color: '#000000',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          color: 'text.primary',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         }}
       >
-        <Toolbar sx={{ minHeight: '48px !important' }}>
+        <Toolbar sx={{ minHeight: '64px !important' }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -90,13 +168,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography 
-            variant="body1" 
+            variant="h6" 
             noWrap 
             component="div"
-            sx={{ fontFamily: '"メイリオ", "Meiryo", sans-serif' }}
+            sx={{ flexGrow: 1, fontWeight: 600 }}
           >
-            Construction Todo System - 建築工事管理システム
+            {menuItems.find(item => item.path === router.pathname)?.text || 'Construction Todo System'}
           </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="通知">
+              <IconButton color="inherit">
+                <Badge badgeContent={3} color="error">
+                  <Notifications />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="アカウント">
+              <IconButton color="inherit" onClick={() => router.push('/settings')}>
+                <AccountCircle />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box
@@ -132,11 +224,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 2,
+          p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 6,
-          backgroundColor: '#fafafa',
-          minHeight: '100vh',
+          mt: '64px',
+          backgroundColor: '#f8fafc',
+          minHeight: 'calc(100vh - 64px)',
         }}
       >
         {children}

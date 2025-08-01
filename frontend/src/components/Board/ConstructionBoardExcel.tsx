@@ -40,9 +40,9 @@ const ExcelContainer = styled(Paper)(({ theme }) => ({
   width: '100%',
   height: 'calc(100vh - 200px)',
   overflow: 'hidden',
-  border: '1px solid #d0d0d0',
-  borderRadius: 0,
+  borderRadius: theme.shape.borderRadius,
   backgroundColor: '#ffffff',
+  boxShadow: theme.shadows[2],
 }));
 
 const ExcelGrid = styled('div')({
