@@ -21,6 +21,7 @@ import {
   Tabs,
   Tab,
   Alert,
+  InputAdornment,
 } from '@mui/material';
 import {
   Person,
@@ -33,6 +34,7 @@ import {
   Comment,
   AttachFile,
   Add,
+  Search,
 } from '@mui/icons-material';
 import { mockProjects, getProjectDetails, phases, allStages } from '@/data/mockData';
 import { format } from 'date-fns';
@@ -62,9 +64,30 @@ function TabPanel(props: TabPanelProps) {
 export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId }) => {
   const [tabValue, setTabValue] = useState(0);
   const [newComment, setNewComment] = useState('');
+  const [taskFilter, setTaskFilter] = useState('all');
+  const [searchTask, setSearchTask] = useState('');
   
   const project = mockProjects.find(p => p.id === projectId);
-  const tasks = getProjectDetails(projectId);
+  const allTasks = getProjectDetails(projectId);
+  
+  // Filter tasks
+  const tasks = allTasks.filter(task => {
+    // Status filter
+    if (taskFilter !== 'all' && task.status !== taskFilter) {
+      return false;
+    }
+    
+    // Search filter
+    if (searchTask) {
+      const searchLower = searchTask.toLowerCase();
+      if (!task.stageName.toLowerCase().includes(searchLower) &&
+          !task.description.toLowerCase().includes(searchLower)) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
   
   if (!project) {
     return (
@@ -237,6 +260,57 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
       
       {/* タスク一覧タブ */}
       <TabPanel value={tabValue} index={0}>
+        {/* タスクフィルター */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <TextField
+            size="small"
+            placeholder="タスクを検索..."
+            value={searchTask}
+            onChange={(e) => setSearchTask(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 250 }}
+          />
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Chip
+              label="すべて"
+              onClick={() => setTaskFilter('all')}
+              color={taskFilter === 'all' ? 'primary' : 'default'}
+              variant={taskFilter === 'all' ? 'filled' : 'outlined'}
+            />
+            <Chip
+              label="未着手"
+              onClick={() => setTaskFilter('pending')}
+              color={taskFilter === 'pending' ? 'default' : 'default'}
+              variant={taskFilter === 'pending' ? 'filled' : 'outlined'}
+            />
+            <Chip
+              label="進行中"
+              onClick={() => setTaskFilter('in_progress')}
+              color={taskFilter === 'in_progress' ? 'primary' : 'default'}
+              variant={taskFilter === 'in_progress' ? 'filled' : 'outlined'}
+            />
+            <Chip
+              label="完了"
+              onClick={() => setTaskFilter('completed')}
+              color={taskFilter === 'completed' ? 'success' : 'default'}
+              variant={taskFilter === 'completed' ? 'filled' : 'outlined'}
+            />
+            <Chip
+              label="遅延"
+              onClick={() => setTaskFilter('delayed')}
+              color={taskFilter === 'delayed' ? 'error' : 'default'}
+              variant={taskFilter === 'delayed' ? 'filled' : 'outlined'}
+            />
+          </Box>
+        </Box>
+        
         <Grid container spacing={2}>
           {tasks.map((task) => (
             <Grid item xs={12} key={task.id}>

@@ -1,8 +1,34 @@
-import React from 'react';
-import { Box, Paper, Typography, Tabs, Tab, Chip } from '@mui/material';
+import React, { useState, useMemo } from 'react';
+import { 
+  Box, 
+  Paper, 
+  Typography, 
+  Tabs, 
+  Tab, 
+  Chip,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  IconButton,
+  Badge,
+  Collapse,
+  Button,
+  SelectChangeEvent,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 import { mockProjects, phases, allStages } from '@/data/mockData';
+import { 
+  Search, 
+  FilterList, 
+  Clear,
+  ExpandMore,
+  ExpandLess,
+} from '@mui/icons-material';
 
 // エクセル風のスタイル定義
 const ExcelContainer = styled(Paper)(({ theme }) => ({
@@ -127,8 +153,27 @@ const getRowBackgroundColor = (progress: number, delayRisk: string) => {
   return 'transparent';
 };
 
+interface FilterState {
+  search: string;
+  phase: string;
+  grade: string;
+  assignee: string;
+  status: string;
+  delayRisk: string;
+}
+
 export const ConstructionBoardExcel: React.FC = () => {
   const [tabValue, setTabValue] = React.useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    phase: 'all',
+    grade: 'all',
+    assignee: 'all',
+    status: 'all',
+    delayRisk: 'all',
+  });
+  
   const router = useRouter();
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -138,9 +183,267 @@ export const ConstructionBoardExcel: React.FC = () => {
   const handleProjectClick = (projectId: string) => {
     router.push(`/projects/${projectId}`);
   };
+  
+  const handleFilterChange = (field: keyof FilterState) => (event: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent) => {
+    setFilters({
+      ...filters,
+      [field]: event.target.value,
+    });
+  };
+  
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      phase: 'all',
+      grade: 'all',
+      assignee: 'all',
+      status: 'all',
+      delayRisk: 'all',
+    });
+  };
+  
+  // Get unique assignees
+  const allAssignees = useMemo(() => {
+    const assignees = new Set<string>();
+    mockProjects.forEach(project => {
+      assignees.add(project.sales);
+      assignees.add(project.design);
+      assignees.add(project.ic);
+      assignees.add(project.construction);
+    });
+    return Array.from(assignees).sort();
+  }, []);
+  
+  // Filter projects
+  const filteredProjects = useMemo(() => {
+    return mockProjects.filter(project => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        if (!project.name.toLowerCase().includes(searchLower) &&
+            !project.customer.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+      
+      // Phase filter
+      if (filters.phase !== 'all' && !project.phase.includes(filters.phase)) {
+        return false;
+      }
+      
+      // Grade filter
+      if (filters.grade !== 'all' && project.grade !== filters.grade) {
+        return false;
+      }
+      
+      // Assignee filter
+      if (filters.assignee !== 'all') {
+        if (project.sales !== filters.assignee &&
+            project.design !== filters.assignee &&
+            project.ic !== filters.assignee &&
+            project.construction !== filters.assignee) {
+          return false;
+        }
+      }
+      
+      // Status filter
+      if (filters.status !== 'all' && project.status !== filters.status) {
+        return false;
+      }
+      
+      // Delay risk filter
+      if (filters.delayRisk !== 'all' && project.delayRisk !== filters.delayRisk) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [filters]);
+  
+  const activeFilterCount = Object.values(filters).filter(v => v && v !== 'all').length;
 
   return (
     <Box>
+      {/* フィルターセクション */}
+      <Paper sx={{ mb: 2, p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: showFilters ? 2 : 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6" sx={{ fontSize: '16px' }}>
+              フィルター
+            </Typography>
+            <Badge badgeContent={activeFilterCount} color="primary">
+              <FilterList />
+            </Badge>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {activeFilterCount > 0 && (
+              <Button
+                size="small"
+                startIcon={<Clear />}
+                onClick={clearFilters}
+              >
+                クリア
+              </Button>
+            )}
+            <IconButton
+              size="small"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </Box>
+        </Box>
+        
+        <Collapse in={showFilters}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6} lg={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="検索（邸名・顧客名）"
+                value={filters.search}
+                onChange={handleFilterChange('search')}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={6} md={3} lg={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>フェーズ</InputLabel>
+                <Select
+                  value={filters.phase}
+                  onChange={handleFilterChange('phase')}
+                  label="フェーズ"
+                >
+                  <MenuItem value="all">すべて</MenuItem>
+                  {phases.map(phase => (
+                    <MenuItem key={phase.id} value={phase.name.split('・')[0]}>
+                      {phase.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={6} md={3} lg={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>ランク</InputLabel>
+                <Select
+                  value={filters.grade}
+                  onChange={handleFilterChange('grade')}
+                  label="ランク"
+                >
+                  <MenuItem value="all">すべて</MenuItem>
+                  <MenuItem value="S">S</MenuItem>
+                  <MenuItem value="A">A</MenuItem>
+                  <MenuItem value="B">B</MenuItem>
+                  <MenuItem value="C">C</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={6} md={3} lg={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>担当者</InputLabel>
+                <Select
+                  value={filters.assignee}
+                  onChange={handleFilterChange('assignee')}
+                  label="担当者"
+                >
+                  <MenuItem value="all">すべて</MenuItem>
+                  {allAssignees.map(assignee => (
+                    <MenuItem key={assignee} value={assignee}>
+                      {assignee}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={6} md={3} lg={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>ステータス</InputLabel>
+                <Select
+                  value={filters.status}
+                  onChange={handleFilterChange('status')}
+                  label="ステータス"
+                >
+                  <MenuItem value="all">すべて</MenuItem>
+                  <MenuItem value="PLANNING">計画中</MenuItem>
+                  <MenuItem value="IN_PROGRESS">進行中</MenuItem>
+                  <MenuItem value="COMPLETED">完了</MenuItem>
+                  <MenuItem value="ON_HOLD">保留中</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={6} md={3} lg={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>遅延リスク</InputLabel>
+                <Select
+                  value={filters.delayRisk}
+                  onChange={handleFilterChange('delayRisk')}
+                  label="遅延リスク"
+                >
+                  <MenuItem value="all">すべて</MenuItem>
+                  <MenuItem value="low">低</MenuItem>
+                  <MenuItem value="medium">中</MenuItem>
+                  <MenuItem value="high">高</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Collapse>
+      </Paper>
+      
+      {/* クイックフィルター */}
+      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Chip
+          label="進行中のみ"
+          onClick={() => setFilters({ ...filters, status: filters.status === 'IN_PROGRESS' ? 'all' : 'IN_PROGRESS' })}
+          color={filters.status === 'IN_PROGRESS' ? 'primary' : 'default'}
+          variant={filters.status === 'IN_PROGRESS' ? 'filled' : 'outlined'}
+          size="small"
+        />
+        <Chip
+          label="遅延リスク高"
+          onClick={() => setFilters({ ...filters, delayRisk: filters.delayRisk === 'high' ? 'all' : 'high' })}
+          color={filters.delayRisk === 'high' ? 'error' : 'default'}
+          variant={filters.delayRisk === 'high' ? 'filled' : 'outlined'}
+          size="small"
+        />
+        <Chip
+          label="施工フェーズ"
+          onClick={() => setFilters({ ...filters, phase: filters.phase === '施工' ? 'all' : '施工' })}
+          color={filters.phase === '施工' ? 'primary' : 'default'}
+          variant={filters.phase === '施工' ? 'filled' : 'outlined'}
+          size="small"
+        />
+        <Chip
+          label="ランクS"
+          onClick={() => setFilters({ ...filters, grade: filters.grade === 'S' ? 'all' : 'S' })}
+          color={filters.grade === 'S' ? 'warning' : 'default'}
+          variant={filters.grade === 'S' ? 'filled' : 'outlined'}
+          size="small"
+        />
+      </Box>
+      
+      {/* 検索結果 */}
+      {(filters.search || activeFilterCount > 0) && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {filteredProjects.length} 件のプロジェクトが見つかりました
+            {filters.search && ` (検索: "${filters.search}")`}
+          </Typography>
+        </Box>
+      )}
+      
       <ExcelTabs value={tabValue} onChange={handleTabChange}>
         <Tab label="実施済日程ボード" />
         <Tab label="予測日程ボード" />
@@ -161,7 +464,7 @@ export const ConstructionBoardExcel: React.FC = () => {
               <GridCell width={70} isHeader>フェーズ</GridCell>
             </GridRow>
             {/* データ行 */}
-            {mockProjects.map((project) => (
+            {filteredProjects.map((project) => (
               <GridRow 
                 key={project.id}
                 style={{ 
@@ -263,7 +566,7 @@ export const ConstructionBoardExcel: React.FC = () => {
               </GridRow>
 
               {/* データ行 */}
-              {mockProjects.map((project) => (
+              {filteredProjects.map((project) => (
                 <GridRow 
                   key={project.id}
                   style={{ 
