@@ -18,6 +18,8 @@ import {
   Collapse,
   Button,
   SelectChangeEvent,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/router';
@@ -28,6 +30,9 @@ import {
   Clear,
   ExpandMore,
   ExpandLess,
+  Sort,
+  ArrowUpward,
+  ArrowDownward,
 } from '@mui/icons-material';
 
 // エクセル風のスタイル定義
@@ -162,6 +167,9 @@ interface FilterState {
   delayRisk: string;
 }
 
+type SortField = 'name' | 'rank' | 'phase' | 'foundation' | 'roofing' | 'progress';
+type SortDirection = 'asc' | 'desc';
+
 export const ConstructionBoardExcel: React.FC = () => {
   const [tabValue, setTabValue] = React.useState(0);
   const [showFilters, setShowFilters] = useState(false);
@@ -173,6 +181,8 @@ export const ConstructionBoardExcel: React.FC = () => {
     status: 'all',
     delayRisk: 'all',
   });
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   const router = useRouter();
 
@@ -214,9 +224,10 @@ export const ConstructionBoardExcel: React.FC = () => {
     return Array.from(assignees).sort();
   }, []);
   
-  // Filter projects
+  // Filter and sort projects
   const filteredProjects = useMemo(() => {
-    return mockProjects.filter(project => {
+    // First filter
+    const filtered = mockProjects.filter(project => {
       // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
@@ -258,7 +269,43 @@ export const ConstructionBoardExcel: React.FC = () => {
       
       return true;
     });
-  }, [filters]);
+    
+    // Then sort
+    const sorted = [...filtered].sort((a, b) => {
+      let compareValue = 0;
+      
+      switch (sortField) {
+        case 'name':
+          compareValue = a.name.localeCompare(b.name);
+          break;
+        case 'rank':
+          const rankOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3 };
+          compareValue = rankOrder[a.grade] - rankOrder[b.grade];
+          break;
+        case 'phase':
+          const phaseOrder = phases.reduce((acc, phase, index) => ({ ...acc, [phase.name]: index }), {});
+          compareValue = (phaseOrder[a.phase] || 999) - (phaseOrder[b.phase] || 999);
+          break;
+        case 'foundation':
+          const aFoundationDate = a.stages['基礎着工'] ? new Date(a.stages['基礎着工']).getTime() : Infinity;
+          const bFoundationDate = b.stages['基礎着工'] ? new Date(b.stages['基礎着工']).getTime() : Infinity;
+          compareValue = aFoundationDate - bFoundationDate;
+          break;
+        case 'roofing':
+          const aRoofingDate = a.stages['上棟'] ? new Date(a.stages['上棟']).getTime() : Infinity;
+          const bRoofingDate = b.stages['上棟'] ? new Date(b.stages['上棟']).getTime() : Infinity;
+          compareValue = aRoofingDate - bRoofingDate;
+          break;
+        case 'progress':
+          compareValue = b.progress - a.progress;
+          break;
+      }
+      
+      return sortDirection === 'asc' ? compareValue : -compareValue;
+    });
+    
+    return sorted;
+  }, [filters, sortField, sortDirection]);
   
   const activeFilterCount = Object.values(filters).filter(v => v && v !== 'all').length;
 
@@ -402,36 +449,70 @@ export const ConstructionBoardExcel: React.FC = () => {
         </Collapse>
       </Paper>
       
-      {/* クイックフィルター */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        <Chip
-          label="進行中のみ"
-          onClick={() => setFilters({ ...filters, status: filters.status === 'IN_PROGRESS' ? 'all' : 'IN_PROGRESS' })}
-          color={filters.status === 'IN_PROGRESS' ? 'primary' : 'default'}
-          variant={filters.status === 'IN_PROGRESS' ? 'filled' : 'outlined'}
-          size="small"
-        />
-        <Chip
-          label="遅延リスク高"
-          onClick={() => setFilters({ ...filters, delayRisk: filters.delayRisk === 'high' ? 'all' : 'high' })}
-          color={filters.delayRisk === 'high' ? 'error' : 'default'}
-          variant={filters.delayRisk === 'high' ? 'filled' : 'outlined'}
-          size="small"
-        />
-        <Chip
-          label="施工フェーズ"
-          onClick={() => setFilters({ ...filters, phase: filters.phase === '施工' ? 'all' : '施工' })}
-          color={filters.phase === '施工' ? 'primary' : 'default'}
-          variant={filters.phase === '施工' ? 'filled' : 'outlined'}
-          size="small"
-        />
-        <Chip
-          label="ランクS"
-          onClick={() => setFilters({ ...filters, grade: filters.grade === 'S' ? 'all' : 'S' })}
-          color={filters.grade === 'S' ? 'warning' : 'default'}
-          variant={filters.grade === 'S' ? 'filled' : 'outlined'}
-          size="small"
-        />
+      {/* クイックフィルターと並び替え */}
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Chip
+            label="進行中のみ"
+            onClick={() => setFilters({ ...filters, status: filters.status === 'IN_PROGRESS' ? 'all' : 'IN_PROGRESS' })}
+            color={filters.status === 'IN_PROGRESS' ? 'primary' : 'default'}
+            variant={filters.status === 'IN_PROGRESS' ? 'filled' : 'outlined'}
+            size="small"
+          />
+          <Chip
+            label="遅延リスク高"
+            onClick={() => setFilters({ ...filters, delayRisk: filters.delayRisk === 'high' ? 'all' : 'high' })}
+            color={filters.delayRisk === 'high' ? 'error' : 'default'}
+            variant={filters.delayRisk === 'high' ? 'filled' : 'outlined'}
+            size="small"
+          />
+          <Chip
+            label="施工フェーズ"
+            onClick={() => setFilters({ ...filters, phase: filters.phase === '施工' ? 'all' : '施工' })}
+            color={filters.phase === '施工' ? 'primary' : 'default'}
+            variant={filters.phase === '施工' ? 'filled' : 'outlined'}
+            size="small"
+          />
+          <Chip
+            label="ランクS"
+            onClick={() => setFilters({ ...filters, grade: filters.grade === 'S' ? 'all' : 'S' })}
+            color={filters.grade === 'S' ? 'warning' : 'default'}
+            variant={filters.grade === 'S' ? 'filled' : 'outlined'}
+            size="small"
+          />
+        </Box>
+        
+        {/* 並び替えコントロール */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Sort fontSize="small" />
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as SortField)}
+              displayEmpty
+            >
+              <MenuItem value="name">邸名</MenuItem>
+              <MenuItem value="rank">ランク</MenuItem>
+              <MenuItem value="phase">フェーズ</MenuItem>
+              <MenuItem value="foundation">基礎着工日</MenuItem>
+              <MenuItem value="roofing">上棟日</MenuItem>
+              <MenuItem value="progress">進捗率</MenuItem>
+            </Select>
+          </FormControl>
+          <ToggleButtonGroup
+            value={sortDirection}
+            exclusive
+            onChange={(e, newDirection) => newDirection && setSortDirection(newDirection)}
+            size="small"
+          >
+            <ToggleButton value="asc" aria-label="昇順">
+              <ArrowUpward fontSize="small" />
+            </ToggleButton>
+            <ToggleButton value="desc" aria-label="降順">
+              <ArrowDownward fontSize="small" />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
       
       {/* 検索結果 */}
