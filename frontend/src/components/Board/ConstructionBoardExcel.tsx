@@ -194,7 +194,7 @@ export const ConstructionBoardExcel: React.FC = () => {
     router.push(`/projects/${projectId}`);
   };
   
-  const handleFilterChange = (field: keyof FilterState) => (event: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent) => {
+  const handleFilterChange = (field: keyof FilterState) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
     setFilters({
       ...filters,
       [field]: event.target.value,
@@ -279,11 +279,11 @@ export const ConstructionBoardExcel: React.FC = () => {
           compareValue = a.name.localeCompare(b.name);
           break;
         case 'rank':
-          const rankOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3 };
+          const rankOrder: { [key: string]: number } = { 'S': 0, 'A': 1, 'B': 2, 'C': 3 };
           compareValue = rankOrder[a.grade] - rankOrder[b.grade];
           break;
         case 'phase':
-          const phaseOrder = phases.reduce((acc, phase, index) => ({ ...acc, [phase.name]: index }), {});
+          const phaseOrder: { [key: string]: number } = phases.reduce((acc, phase, index) => ({ ...acc, [phase.name]: index }), {});
           compareValue = (phaseOrder[a.phase] || 999) - (phaseOrder[b.phase] || 999);
           break;
         case 'foundation':
