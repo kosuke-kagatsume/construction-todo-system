@@ -27,6 +27,12 @@ import {
   Grid,
   Avatar,
   Tooltip,
+  Card,
+  CardContent,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Alert,
 } from '@mui/material';
 import {
   Add,
@@ -39,11 +45,14 @@ import {
   CalendarToday,
   AttachMoney,
   Person,
+  Category,
+  CheckCircle,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { mockProjects, phases } from '@/data/mockData';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { defaultTemplates, generateTasksFromTemplate } from '@/data/projectTemplates';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -51,6 +60,8 @@ export default function ProjectsPage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [templateStep, setTemplateStep] = useState(0); // 0: テンプレート選択, 1: プロジェクト詳細
   const [newProject, setNewProject] = useState({
     name: '',
     customer: '',
@@ -63,6 +74,7 @@ export default function ProjectsPage() {
     budget: 0,
     startDate: '',
     completionDate: '',
+    productType: '',
   });
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, projectId: string) => {
@@ -83,9 +95,26 @@ export default function ProjectsPage() {
   };
 
   const handleCreateProject = () => {
+    // テンプレートからタスクを生成
+    if (selectedTemplate && newProject.startDate) {
+      const tasks = generateTasksFromTemplate(
+        selectedTemplate,
+        new Date(newProject.startDate),
+        {
+          sales: newProject.sales,
+          design: newProject.design,
+          ic: newProject.ic,
+          construction: newProject.construction,
+        }
+      );
+      console.log('Generated tasks:', tasks);
+    }
+    
     // TODO: API call to create project
     console.log('Creating project:', newProject);
     setOpenDialog(false);
+    setTemplateStep(0);
+    setSelectedTemplate('');
     setNewProject({
       name: '',
       customer: '',
@@ -98,7 +127,25 @@ export default function ProjectsPage() {
       budget: 0,
       startDate: '',
       completionDate: '',
+      productType: '',
     });
+  };
+  
+  const handleTemplateSelect = () => {
+    const template = defaultTemplates.find(t => t.id === selectedTemplate);
+    if (template) {
+      setNewProject({
+        ...newProject,
+        productType: template.productType,
+      });
+      setTemplateStep(1);
+    }
+  };
+  
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setTemplateStep(0);
+    setSelectedTemplate('');
   };
 
   const filteredProjects = mockProjects.filter(project =>
@@ -285,9 +332,106 @@ export default function ProjectsPage() {
         </Menu>
 
         {/* 新規プロジェクト作成ダイアログ */}
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>新規プロジェクト作成</DialogTitle>
+        <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
+          <DialogTitle>
+            {templateStep === 0 ? 'プロジェクトテンプレートを選択' : '新規プロジェクト作成'}
+          </DialogTitle>
           <DialogContent>
+            {templateStep === 0 ? (
+              // テンプレート選択画面
+              <Box sx={{ mt: 2 }}>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  プロジェクトの種類に応じたテンプレートを選択してください。
+                  各テンプレートには標準的なタスクと工程が設定されています。
+                </Alert>
+                <RadioGroup
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                >
+                  <Grid container spacing={2}>
+                    {defaultTemplates.filter(t => t.isActive).map((template) => (
+                      <Grid item xs={12} key={template.id}>
+                        <Card 
+                          sx={{ 
+                            cursor: 'pointer',
+                            border: selectedTemplate === template.id ? '2px solid' : '1px solid',
+                            borderColor: selectedTemplate === template.id ? 'primary.main' : 'grey.300',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-2px)',
+                              boxShadow: 3,
+                            },
+                          }}
+                          onClick={() => setSelectedTemplate(template.id)}
+                        >
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                              <Radio
+                                value={template.id}
+                                checked={selectedTemplate === template.id}
+                              />
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Typography variant="h6" component="span">
+                                    {template.icon} {template.name}
+                                  </Typography>
+                                  <Chip
+                                    label={template.productType}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                  {template.description}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      標準工期: {template.defaultDuration}日
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <CheckCircle sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      タスク数: {template.tasks.length}個
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                                <Box sx={{ mt: 2 }}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    主な工程:
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                                    {template.tasks.slice(0, 5).map((task) => (
+                                      <Chip
+                                        key={task.id}
+                                        label={task.name}
+                                        size="small"
+                                        sx={{ height: 20, fontSize: '11px' }}
+                                      />
+                                    ))}
+                                    {template.tasks.length > 5 && (
+                                      <Chip
+                                        label={`他${template.tasks.length - 5}件`}
+                                        size="small"
+                                        sx={{ height: 20, fontSize: '11px' }}
+                                      />
+                                    )}
+                                  </Box>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </RadioGroup>
+              </Box>
+            ) : (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -449,12 +593,31 @@ export default function ProjectsPage() {
                 />
               </Grid>
             </Grid>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>キャンセル</Button>
-            <Button onClick={handleCreateProject} variant="contained">
-              作成
-            </Button>
+            <Button onClick={handleDialogClose}>キャンセル</Button>
+            {templateStep === 0 ? (
+              <Button 
+                onClick={handleTemplateSelect} 
+                variant="contained"
+                disabled={!selectedTemplate}
+                startIcon={<Category />}
+              >
+                次へ
+              </Button>
+            ) : (
+              <>
+                <Button onClick={() => setTemplateStep(0)}>戻る</Button>
+                <Button 
+                  onClick={handleCreateProject} 
+                  variant="contained"
+                  disabled={!newProject.name || !newProject.customer}
+                >
+                  作成
+                </Button>
+              </>
+            )}
           </DialogActions>
         </Dialog>
       </Box>

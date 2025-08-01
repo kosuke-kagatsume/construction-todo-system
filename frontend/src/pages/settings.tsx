@@ -47,7 +47,13 @@ import {
   Schedule,
   Build,
   AccountTree,
+  Category,
+  ContentCopy,
+  Visibility,
+  CalendarToday,
 } from '@mui/icons-material';
+import { defaultTemplates } from '@/data/projectTemplates';
+import { phases } from '@/data/mockData';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -73,6 +79,7 @@ function TabPanel(props: TabPanelProps) {
 export default function SettingsPage() {
   const [tabValue, setTabValue] = useState(0);
   const [editMode, setEditMode] = useState(false);
+  const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
     name: '山田太郎',
     email: 'yamada@construction.co.jp',
@@ -133,6 +140,7 @@ export default function SettingsPage() {
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab icon={<Person />} label="プロフィール" />
             <Tab icon={<Business />} label="会社情報" />
+            <Tab icon={<Category />} label="テンプレート" />
             <Tab icon={<Notifications />} label="通知設定" />
             <Tab icon={<Security />} label="セキュリティ" />
           </Tabs>
@@ -472,8 +480,167 @@ export default function SettingsPage() {
           </Card>
         </TabPanel>
 
-        {/* 通知設定タブ */}
+        {/* テンプレート管理タブ */}
         <TabPanel value={tabValue} index={2}>
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">
+                プロジェクトテンプレート
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                size="small"
+              >
+                新規テンプレート作成
+              </Button>
+            </Box>
+            
+            <Alert severity="info" sx={{ mb: 3 }}>
+              テンプレートを使用することで、プロジェクトの種類に応じた標準的なタスクセットを自動的に生成できます。
+              各テンプレートは編集・複製が可能です。
+            </Alert>
+
+            <Grid container spacing={2}>
+              {defaultTemplates.map((template) => (
+                <Grid item xs={12} key={template.id}>
+                  <Card>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                            <Typography variant="h6">
+                              {template.icon} {template.name}
+                            </Typography>
+                            <Chip
+                              label={template.productType}
+                              size="small"
+                              color="primary"
+                            />
+                            {template.isActive ? (
+                              <Chip
+                                label="有効"
+                                size="small"
+                                color="success"
+                              />
+                            ) : (
+                              <Chip
+                                label="無効"
+                                size="small"
+                                color="default"
+                              />
+                            )}
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            {template.description}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                標準工期: {template.defaultDuration}日
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <CheckCircle sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                タスク数: {template.tasks.length}個
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => setExpandedTemplate(
+                              expandedTemplate === template.id ? null : template.id
+                            )}
+                          >
+                            <Visibility />
+                          </IconButton>
+                          <IconButton size="small">
+                            <ContentCopy />
+                          </IconButton>
+                          <IconButton size="small">
+                            <Edit />
+                          </IconButton>
+                          <IconButton size="small" color="error">
+                            <Delete />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      
+                      {/* タスク詳細表示 */}
+                      {expandedTemplate === template.id && (
+                        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+                          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                            タスク一覧
+                          </Typography>
+                          <Grid container spacing={1}>
+                            {template.tasks.map((task, index) => (
+                              <Grid item xs={12} sm={6} md={4} key={task.id}>
+                                <Card variant="outlined" sx={{ height: '100%' }}>
+                                  <CardContent sx={{ p: 2 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'start', gap: 1 }}>
+                                      <Chip
+                                        label={index + 1}
+                                        size="small"
+                                        sx={{ 
+                                          minWidth: 24, 
+                                          height: 24,
+                                          backgroundColor: phases.find(p => p.id === task.phaseId)?.color || '#ccc',
+                                          color: 'white',
+                                          fontWeight: 'bold',
+                                        }}
+                                      />
+                                      <Box sx={{ flex: 1 }}>
+                                        <Typography variant="body2" fontWeight="medium">
+                                          {task.name}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          {task.description}
+                                        </Typography>
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" color="text.secondary">
+                                            期間: {task.defaultDuration}日
+                                          </Typography>
+                                          {task.assigneeRole && (
+                                            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                                              担当: {
+                                                task.assigneeRole === 'sales' ? '営業' :
+                                                task.assigneeRole === 'design' ? '設計' :
+                                                task.assigneeRole === 'ic' ? 'IC' :
+                                                '工務'
+                                              }
+                                            </Typography>
+                                          )}
+                                        </Box>
+                                        {task.checklist && task.checklist.length > 0 && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                              チェック項目: {task.checklist.length}個
+                                            </Typography>
+                                          </Box>
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  </CardContent>
+                                </Card>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </TabPanel>
+
+        {/* 通知設定タブ */}
+        <TabPanel value={tabValue} index={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
@@ -646,7 +813,7 @@ export default function SettingsPage() {
         </TabPanel>
 
         {/* セキュリティタブ */}
-        <TabPanel value={tabValue} index={3}>
+        <TabPanel value={tabValue} index={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
