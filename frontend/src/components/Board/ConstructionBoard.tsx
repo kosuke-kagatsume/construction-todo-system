@@ -53,7 +53,6 @@ export const ConstructionBoard: React.FC = () => {
       field: 'name', 
       headerName: '邸名', 
       width: 150,
-      frozen: true,
     },
     { 
       field: 'customerName', 

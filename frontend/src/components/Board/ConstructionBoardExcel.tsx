@@ -136,7 +136,22 @@ const allStages = [
 ];
 
 // ダミーデータ
-const projects = [
+interface ProjectData {
+  id: string;
+  name: string;
+  customer: string;
+  phase: string;
+  grade: string;
+  sales: string;
+  design: string;
+  ic: string;
+  construction: string;
+  foundation: string;
+  roofing: string;
+  stages: { [key: string]: string };
+}
+
+const projects: ProjectData[] = [
   {
     id: '1',
     name: '田中邸',
