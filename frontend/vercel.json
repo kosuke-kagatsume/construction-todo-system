@@ -1,0 +1,11 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://construction-todo-api.vercel.app",
+    "NEXT_PUBLIC_APP_NAME": "Construction Todo System",
+    "NEXT_PUBLIC_POLLING_INTERVAL": "5000"
+  }
+}
