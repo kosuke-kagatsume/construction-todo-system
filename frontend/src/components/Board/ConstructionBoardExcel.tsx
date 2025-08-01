@@ -1,6 +1,8 @@
 import React from 'react';
-import { Box, Paper, Typography, Tabs, Tab } from '@mui/material';
+import { Box, Paper, Typography, Tabs, Tab, Chip } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useRouter } from 'next/router';
+import { mockProjects, phases, allStages } from '@/data/mockData';
 
 // エクセル風のスタイル定義
 const ExcelContainer = styled(Paper)(({ theme }) => ({
@@ -117,87 +119,24 @@ const ExcelTabs = styled(Tabs)({
   },
 });
 
-// フェーズとステージのデータ
-const phases = [
-  { id: '1', name: '追客・設計', color: '#2196F3', stages: 6 },
-  { id: '2', name: '契約', color: '#4CAF50', stages: 3 },
-  { id: '3', name: '打ち合わせ', color: '#FF9800', stages: 10 },
-  { id: '4', name: '施工', color: '#F44336', stages: 17 },
-  { id: '5', name: '竣工', color: '#9C27B0', stages: 4 },
-];
-
-const allStages = [
-  '設計申込', 'プランヒアリング', '1stプラン', '2ndプラン', '3rdプラン', 'EXプラン',
-  '契約前打合せ', '請負契約', '建築請負契約',
-  '1st仕様', '2nd仕様', '3rd仕様', '4th仕様', '5th仕様', 'EX仕様', 'FB', '三者会議', 'プレカット', '着工前確認',
-  '地鎮祭準備', '地鎮祭', '地盤改良', '基礎着工', '配筋検査', 'アンカー', '土台伏せ', '上棟',
-  'ルーフィング', '金物検査', '透湿防水', '断熱検査', '外壁確認', '木完', '追加変更', '保証書', '社内完了',
-  '見学会', '施主完了', '完成検査', '引渡式'
-];
-
-// ダミーデータ
-interface ProjectData {
-  id: string;
-  name: string;
-  customer: string;
-  phase: string;
-  grade: string;
-  sales: string;
-  design: string;
-  ic: string;
-  construction: string;
-  foundation: string;
-  roofing: string;
-  stages: { [key: string]: string };
-}
-
-const projects: ProjectData[] = [
-  {
-    id: '1',
-    name: '田中邸',
-    customer: '田中太郎',
-    phase: '施工',
-    grade: 'A',
-    sales: '山田',
-    design: '佐藤',
-    ic: '鈴木',
-    construction: '高橋',
-    foundation: '03/15',
-    roofing: '04/20',
-    stages: {
-      '設計申込': '01/15',
-      'プランヒアリング': '01/20',
-      '1stプラン': '01/25',
-      '基礎着工': '03/15',
-      '上棟': '04/20',
-    }
-  },
-  {
-    id: '2',
-    name: '佐藤邸',
-    customer: '佐藤花子',
-    phase: '契約',
-    grade: 'B',
-    sales: '田中',
-    design: '山田',
-    ic: '高橋',
-    construction: '鈴木',
-    foundation: '04/10',
-    roofing: '05/15',
-    stages: {
-      '設計申込': '02/01',
-      'プランヒアリング': '02/05',
-      '1stプラン': '02/10',
-      '2ndプラン': '02/15',
-    }
-  },
-];
+// 進捗率に応じた行の背景色を決定
+const getRowBackgroundColor = (progress: number, delayRisk: string) => {
+  if (delayRisk === 'high') return 'rgba(255, 0, 0, 0.05)';
+  if (progress === 100) return 'rgba(76, 175, 80, 0.05)';
+  if (progress >= 75) return 'rgba(33, 150, 243, 0.03)';
+  return 'transparent';
+};
 
 export const ConstructionBoardExcel: React.FC = () => {
   const [tabValue, setTabValue] = React.useState(0);
+  const router = useRouter();
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    router.push(`/projects/${projectId}`);
   };
 
   return (
@@ -218,28 +157,81 @@ export const ConstructionBoardExcel: React.FC = () => {
               <GridCell width={80} isHeader>邸名</GridCell>
               <GridCell width={80} isHeader>顧客名</GridCell>
               <GridCell width={50} isHeader>ランク</GridCell>
-              <GridCell width={90} isHeader>フェーズ</GridCell>
+              <GridCell width={50} isHeader>進捗</GridCell>
+              <GridCell width={70} isHeader>フェーズ</GridCell>
             </GridRow>
             {/* データ行 */}
-            {projects.map((project) => (
-              <GridRow key={project.id}>
-                <GridCell width={80} isFixed>{project.name}</GridCell>
+            {mockProjects.map((project) => (
+              <GridRow 
+                key={project.id}
+                style={{ 
+                  backgroundColor: getRowBackgroundColor(project.progress, project.delayRisk),
+                  cursor: 'pointer'
+                }}
+                onClick={() => handleProjectClick(project.id)}
+              >
+                <GridCell width={80} isFixed>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {project.name}
+                    {project.delayRisk === 'high' && (
+                      <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 'bold' }}>!</Typography>
+                    )}
+                  </Box>
+                </GridCell>
                 <GridCell width={80} isFixed>{project.customer}</GridCell>
-                <GridCell width={50} isFixed>{project.grade}</GridCell>
-                <GridCell width={90} isFixed>
-                  <Box
+                <GridCell width={50} isFixed>
+                  <Chip 
+                    label={project.grade} 
+                    size="small" 
+                    sx={{ 
+                      height: 18, 
+                      fontSize: '11px',
+                      backgroundColor: 
+                        project.grade === 'S' ? '#ffd700' :
+                        project.grade === 'A' ? '#c0c0c0' :
+                        project.grade === 'B' ? '#cd7f32' :
+                        '#e0e0e0',
+                      color: project.grade === 'S' ? '#000' : '#fff'
+                    }} 
+                  />
+                </GridCell>
+                <GridCell width={50} isFixed>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box sx={{ 
+                      width: '100%', 
+                      height: 4, 
+                      backgroundColor: '#e0e0e0', 
+                      borderRadius: 2,
+                      overflow: 'hidden'
+                    }}>
+                      <Box sx={{ 
+                        width: `${project.progress}%`, 
+                        height: '100%', 
+                        backgroundColor: 
+                          project.progress === 100 ? '#4caf50' :
+                          project.progress >= 75 ? '#2196f3' :
+                          project.progress >= 50 ? '#ff9800' :
+                          '#f44336',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </Box>
+                    <Typography variant="caption" sx={{ fontSize: '10px', minWidth: '25px' }}>
+                      {project.progress}%
+                    </Typography>
+                  </Box>
+                </GridCell>
+                <GridCell width={70} isFixed>
+                  <Chip
+                    label={project.phase}
+                    size="small"
                     sx={{
                       backgroundColor: phases.find(p => p.name.includes(project.phase.split('・')[0]))?.color || '#ccc',
                       color: 'white',
-                      padding: '2px 6px',
-                      borderRadius: '2px',
-                      fontSize: '11px',
-                      width: '100%',
-                      textAlign: 'center',
+                      fontSize: '10px',
+                      height: 20,
+                      '& .MuiChip-label': { px: 1 }
                     }}
-                  >
-                    {project.phase}
-                  </Box>
+                  />
                 </GridCell>
               </GridRow>
             ))}
@@ -271,17 +263,30 @@ export const ConstructionBoardExcel: React.FC = () => {
               </GridRow>
 
               {/* データ行 */}
-              {projects.map((project) => (
-                <GridRow key={project.id}>
+              {mockProjects.map((project) => (
+                <GridRow 
+                  key={project.id}
+                  style={{ 
+                    backgroundColor: getRowBackgroundColor(project.progress, project.delayRisk),
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleProjectClick(project.id)}
+                >
                   {allStages.map((stage) => {
                     const date = project.stages[stage];
                     const isCompleted = !!date;
+                    const isMilestone = stage === '基礎着工' || stage === '上棟';
                     return (
                       <StatusCell
                         key={stage}
                         width={80}
                         status={isCompleted ? 'COMPLETED' : undefined}
                         title={date ? `${stage}: ${date}` : stage}
+                        sx={{
+                          fontWeight: isMilestone ? 'bold' : 'normal',
+                          backgroundColor: isMilestone && isCompleted ? '#ffeb3b' : undefined,
+                          color: isMilestone && isCompleted ? '#000' : undefined,
+                        }}
                       >
                         {date || '-'}
                       </StatusCell>
