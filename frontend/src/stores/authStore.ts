@@ -33,15 +33,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      // OAuth2 形式でログイン
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-
-      const response = await api.post('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+      // ログインリクエスト
+      const response = await api.post('/auth/login', {
+        username: email,
+        password: password,
       });
 
       // トークンを保存

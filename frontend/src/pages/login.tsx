@@ -34,15 +34,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // OAuth2 仕様に合わせてフォームデータを送信
-      const formData = new URLSearchParams();
-      formData.append('username', data.email);
-      formData.append('password', data.password);
-
-      const response = await api.post('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+      // 認証リクエスト
+      const response = await api.post('/auth/login', {
+        username: data.email,
+        password: data.password,
       });
 
       // トークンを保存

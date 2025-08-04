@@ -2,8 +2,12 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// 本番環境でバックエンドが未デプロイの場合はモックAPIを使用
+const isProduction = process.env.NODE_ENV === 'production';
+const useLocalApi = isProduction && API_BASE_URL === '/api/proxy';
+
 export const api = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
+  baseURL: useLocalApi ? '/api' : `${API_BASE_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },
