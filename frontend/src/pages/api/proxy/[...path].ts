@@ -1,43 +1,34 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import httpProxyMiddleware from 'http-proxy-middleware';
+import axios from 'axios';
 
 // バックエンドAPIのURL（環境変数から取得）
 const API_URL = process.env.BACKEND_API_URL || 'http://localhost:8000';
 
-// プロキシの設定
-const proxy = httpProxyMiddleware.createProxyMiddleware({
-  target: API_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/proxy': '', // /api/proxy を削除してバックエンドに転送
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    // リクエストヘッダーの調整
-    if (req.headers.cookie) {
-      proxyReq.setHeader('cookie', req.headers.cookie);
-    }
-  },
-  onError: (err, req, res) => {
-    console.error('Proxy error:', err);
-    res.status(500).json({ error: 'Proxy error' });
-  },
-});
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const { path } = req.query;
+  const url = `${API_URL}/${Array.isArray(path) ? path.join('/') : path}`;
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Next.js の bodyParser を無効化（プロキシが処理するため）
-  return new Promise((resolve, reject) => {
-    proxy(req, res, (result: any) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
+  try {
+    const response = await axios({
+      method: req.method as any,
+      url,
+      data: req.body,
+      headers: {
+        ...req.headers,
+        host: undefined,
+      },
+      params: req.query,
     });
-  });
-}
 
-export const config = {
-  api: {
-    bodyParser: false,
-    externalResolver: true,
-  },
-};
+    res.status(response.status).json(response.data);
+  } catch (error: any) {
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Proxy error' });
+    }
+  }
+}

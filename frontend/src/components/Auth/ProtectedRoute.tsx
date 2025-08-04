@@ -14,7 +14,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     // 初回マウント時にユーザー情報を取得
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   useEffect(() => {
     // 認証されていない場合はログインページへリダイレクト

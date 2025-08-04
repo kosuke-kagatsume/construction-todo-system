@@ -72,6 +72,7 @@ export default function LoginPage() {
       >
         <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/dodo-logo.png"
               alt="Construction Todo System"

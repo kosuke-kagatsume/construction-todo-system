@@ -86,7 +86,7 @@ export const StageChecksheet: React.FC<StageChecksheetProps> = ({
   useEffect(() => {
     // 初期状態で全カテゴリを展開
     setExpandedCategories(new Set(Object.keys(categorizedItems)));
-  }, [stageName]);
+  }, [stageName, categorizedItems]);
 
   const handleToggle = (itemId: string) => {
     if (readOnly) return;
