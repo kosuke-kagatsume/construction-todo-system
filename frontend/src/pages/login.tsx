@@ -34,11 +34,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      console.log('Login attempt:', { email: data.email, apiBaseURL: api.defaults.baseURL });
+      
       // 認証リクエスト
       const response = await api.post('/auth/login', {
         username: data.email,
         password: data.password,
       });
+
+      console.log('Login response:', response.data);
 
       // トークンを保存
       localStorage.setItem('access_token', response.data.access_token);
@@ -47,6 +51,7 @@ export default function LoginPage() {
       // ダッシュボードへリダイレクト
       router.push('/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(
         err.response?.data?.detail || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
       );
