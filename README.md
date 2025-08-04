@@ -89,6 +89,13 @@
 
 Vercelでホスティングされたデモサイトで実際の動作を確認できます。
 
+### デモアカウント
+- 管理者: `admin@demo.com` / `admin123`
+- 営業: `sales@demo.com` / `sales123`
+- 設計: `design@demo.com` / `design123`
+- IC: `ic@demo.com` / `ic123`
+- 工務: `construction@demo.com` / `const123`
+
 ## 💻 ローカル開発
 
 ### フロントエンド
@@ -114,9 +121,26 @@ uvicorn app.main:app --reload
 
 http://localhost:8000/docs でAPI仕様確認
 
+## 📱 本番環境へのデプロイ
+
+詳細な手順は [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) を参照してください。
+
+### クイックスタート
+
+1. **フロントエンド（Vercel）**
+   - 上部の "Deploy with Vercel" ボタンをクリック
+   - 環境変数 `NEXT_PUBLIC_API_URL` を設定
+
+2. **バックエンド（Railway推奨）**
+   - PostgreSQL と Redis を追加
+   - 環境変数を設定
+   - `backend` ディレクトリをデプロイ
+
 ## 📱 スクリーンショット
 
-（デプロイ後に追加予定）
+![ログイン画面](https://via.placeholder.com/800x400?text=Login+Screen)
+![現場ボード](https://via.placeholder.com/800x400?text=Construction+Board)
+![プロジェクト詳細](https://via.placeholder.com/800x400?text=Project+Detail)
 
 ## 🤝 貢献
 
