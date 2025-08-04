@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Badge, Tooltip, Divider } from '@mui/material';
-import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notifications, AccountCircle, Construction, Business, Search, Add } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Badge, Tooltip, Divider, Menu, MenuItem } from '@mui/material';
+import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notifications, AccountCircle, Construction, Business, Search, Add, Logout } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
+import { useAuthStore } from '@/stores/authStore';
 
 const drawerWidth = 260;
 
@@ -42,9 +43,24 @@ interface MainLayoutProps {
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { user, logout } = useAuthStore();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   const menuItems = [
@@ -137,14 +153,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             variant="dot"
           >
-            <Avatar sx={{ width: 32, height: 32 }}>山</Avatar>
+            <Avatar sx={{ width: 32, height: 32 }}>
+              {user?.full_name?.charAt(0) || 'U'}
+            </Avatar>
           </StyledBadge>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={600}>
-              山田太郎
+              {user?.full_name || 'ユーザー'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              営業部
+              {user?.role_code === 'SALES' ? '営業' :
+               user?.role_code === 'DESIGN' ? '設計' :
+               user?.role_code === 'IC' ? 'IC' :
+               user?.role_code === 'CONSTRUCTION' ? '工務' : '担当'}
             </Typography>
           </Box>
         </Box>
@@ -219,10 +240,36 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </IconButton>
             </Tooltip>
             <Tooltip title="アカウント">
-              <IconButton color="inherit" onClick={() => router.push('/settings')}>
+              <IconButton color="inherit" onClick={handleMenu}>
                 <AccountCircle />
               </IconButton>
             </Tooltip>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={() => { handleClose(); router.push('/settings'); }}>
+                <ListItemIcon>
+                  <Settings fontSize="small" />
+                </ListItemIcon>
+                設定
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <Logout fontSize="small" />
+                </ListItemIcon>
+                ログアウト
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>
