@@ -1,3 +1,5 @@
+import { convertToNewStages } from './stageMapping';
+
 // モックデータ定義
 export interface ProjectData {
   id: string;
@@ -21,7 +23,8 @@ export interface ProjectData {
   notes: string;
 }
 
-export const mockProjects: ProjectData[] = [
+// 元のプロジェクトデータ（旧ステージ構成）
+const originalProjects: ProjectData[] = [
   {
     id: '1',
     name: '田中邸',
@@ -644,22 +647,32 @@ export const mockProjects: ProjectData[] = [
   }
 ];
 
+// 新しいステージ構成に変換したプロジェクトデータ
+export const mockProjects: ProjectData[] = originalProjects.map(project => ({
+  ...project,
+  stages: convertToNewStages(project.stages)
+}));
+
 // フェーズとステージの定義
 export const phases = [
-  { id: '1', name: '追客・設計', color: '#3b82f6', stages: 6 },
+  { id: '1', name: '追客・設計', color: '#3b82f6', stages: 8 },
   { id: '2', name: '契約', color: '#10b981', stages: 3 },
-  { id: '3', name: '打ち合わせ', color: '#f59e0b', stages: 10 },
-  { id: '4', name: '施工', color: '#ef4444', stages: 17 },
+  { id: '3', name: '打ち合わせ', color: '#f59e0b', stages: 11 },
+  { id: '4', name: '施工', color: '#ef4444', stages: 18 },
   { id: '5', name: '竣工', color: '#8b5cf6', stages: 4 },
 ];
 
 export const allStages = [
-  '設計申込', 'プランヒアリング', '1stプラン', '2ndプラン', '3rdプラン', 'EXプラン',
+  // 追客・設計（8ステージ）
+  '設計申込', 'プランヒアリング', '敷地調査', 'プラン提案', '見積提出', '設計契約', '実施設計', '確認申請',
+  // 契約（3ステージ）
   '契約前打合せ', '請負契約', '建築請負契約',
-  '1st仕様', '2nd仕様', '3rd仕様', '4th仕様', '5th仕様', 'EX仕様', 'FB', '三者会議', 'プレカット', '着工前確認',
-  '地鎮祭準備', '地鎮祭', '地盤改良', '基礎着工', '配筋検査', 'アンカー', '土台伏せ', '上棟',
-  'ルーフィング', '金物検査', '透湿防水', '断熱検査', '外壁確認', '木完', '追加変更', '保証書', '社内完了',
-  '見学会', '施主完了', '完成検査', '引渡式'
+  // 打ち合わせ（11ステージ）
+  '1st仕様', '2nd仕様', '3rd仕様', '4th仕様', '5th仕様', '仕様決定', '図面承認', '建築確認申請', '着工前準備', '地鎮祭準備', '地鎮祭',
+  // 施工（18ステージ）
+  '地盤改良', '基礎着工', '基礎配筋検査', '基礎完了', '土台敷き', '上棟', '上棟式', '屋根工事', '外装工事', '内装下地', '内装仕上げ', '設備工事', '外構工事', '美装工事', '社内検査', '是正工事', '竣工検査', '完了検査',
+  // 竣工（4ステージ）
+  '取扱説明', '引き渡し準備', '引き渡し', 'アフター点検'
 ];
 
 // プロジェクト詳細用のタスクデータ

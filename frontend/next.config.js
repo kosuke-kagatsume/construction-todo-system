@@ -2,6 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // パフォーマンス最適化
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // 画像最適化
+  images: {
+    domains: [],
+    formats: ['image/avif', 'image/webp'],
+  },
   async rewrites() {
     return [
       {

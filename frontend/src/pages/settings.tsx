@@ -51,9 +51,11 @@ import {
   ContentCopy,
   Visibility,
   CalendarToday,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { defaultTemplates } from '@/data/projectTemplates';
 import { phases } from '@/data/mockData';
+import { SharedItemsSettings } from '@/components/Settings/SharedItemsSettings';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -141,6 +143,7 @@ export default function SettingsPage() {
             <Tab icon={<Person />} label="プロフィール" />
             <Tab icon={<Business />} label="会社情報" />
             <Tab icon={<Category />} label="テンプレート" />
+            <Tab icon={<SettingsIcon />} label="共有事項設定" />
             <Tab icon={<Notifications />} label="通知設定" />
             <Tab icon={<Security />} label="セキュリティ" />
           </Tabs>
@@ -639,8 +642,13 @@ export default function SettingsPage() {
           </Box>
         </TabPanel>
 
-        {/* 通知設定タブ */}
+        {/* 共有事項設定タブ */}
         <TabPanel value={tabValue} index={3}>
+          <SharedItemsSettings />
+        </TabPanel>
+
+        {/* 通知設定タブ */}
+        <TabPanel value={tabValue} index={4}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
@@ -813,7 +821,7 @@ export default function SettingsPage() {
         </TabPanel>
 
         {/* セキュリティタブ */}
-        <TabPanel value={tabValue} index={4}>
+        <TabPanel value={tabValue} index={5}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

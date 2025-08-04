@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { ProjectDetailExcel } from '@/components/Project/ProjectDetailExcel';
-import { Box, Typography, IconButton, Breadcrumbs, Link } from '@mui/material';
+import { Box, Typography, IconButton, Breadcrumbs, Link, CircularProgress } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import NextLink from 'next/link';
+
+// 動的インポートで遅延ロード
+const ProjectDetailExcel = dynamic(
+  () => import('@/components/Project/ProjectDetailExcel').then(mod => ({ default: mod.ProjectDetailExcel })),
+  { 
+    loading: () => (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false
+  }
+);
 
 export default function ProjectDetailPage() {
   const router = useRouter();

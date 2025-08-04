@@ -1,22 +1,31 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { ConstructionBoardExcel } from '@/components/Board/ConstructionBoardExcel';
-import { Typography, Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
+
+// 動的インポートで遅延ロード
+const ConstructionBoardEnhancedOptimized = dynamic(
+  () => import('@/components/Board/ConstructionBoardEnhancedOptimized').then(mod => ({ default: mod.ConstructionBoardEnhancedOptimized })),
+  { 
+    loading: () => (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: true
+  }
+);
 
 export default function HomePage() {
   return (
     <MainLayout>
-      <Box className="fade-in">
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
-            現場ボード
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            全プロジェクトの進捗状況を一覧で確認できます
-          </Typography>
+      <Suspense fallback={
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <CircularProgress />
         </Box>
-        <ConstructionBoardExcel />
-      </Box>
+      }>
+        <ConstructionBoardEnhancedOptimized />
+      </Suspense>
     </MainLayout>
   );
 }

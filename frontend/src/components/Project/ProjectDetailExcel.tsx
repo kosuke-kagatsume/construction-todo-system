@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import {
   Box,
   Paper,
@@ -35,8 +36,11 @@ import {
   AttachFile,
   Add,
   Search,
+  RadioButtonUnchecked,
 } from '@mui/icons-material';
 import { mockProjects, getProjectDetails, phases, allStages } from '@/data/mockData';
+import { sampleSharedItems, sharedItemDefinitions } from '@/data/sharedItems';
+import { Select, MenuItem, FormControl } from '@mui/material';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
@@ -62,10 +66,15 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId }) => {
-  const [tabValue, setTabValue] = useState(0);
+  const router = useRouter();
+  const [tabValue, setTabValue] = useState(0); // Changed to 0 since we're swapping tab order
   const [newComment, setNewComment] = useState('');
   const [taskFilter, setTaskFilter] = useState('all');
   const [searchTask, setSearchTask] = useState('');
+  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [editingSharedItems, setEditingSharedItems] = useState<{ [key: string]: boolean }>({});
+  const [sharedItemValues, setSharedItemValues] = useState(sampleSharedItems.items);
+  const [editingItems, setEditingItems] = useState<{ [itemId: string]: boolean }>({});
   
   const project = mockProjects.find(p => p.id === projectId);
   const allTasks = getProjectDetails(projectId);
@@ -101,165 +110,441 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
     setTabValue(newValue);
   };
   
-  const completedTasks = tasks.filter(t => t.status === 'completed').length;
-  const progressPercentage = Math.round((completedTasks / tasks.length) * 100);
+  const handleTaskToggle = (taskId: string) => {
+    setCompletedTasks(prev =>
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+  
+  const completedTasksCount = tasks.filter(t => t.status === 'completed' || completedTasks.includes(t.id)).length;
+  const progressPercentage = Math.round((completedTasksCount / tasks.length) * 100);
+  
+  // 重要共有事項の取得
+  const loanStatus = sharedItemValues['10']?.value || '未設定';
+  const landStatus = sharedItemValues['9']?.value || '未設定';
+  const loanStatusDef = sharedItemDefinitions.find(d => d.id === '10');
+  const landStatusDef = sharedItemDefinitions.find(d => d.id === '9');
+  
+  const handleSharedItemSave = (itemId: string, value: string | number | boolean) => {
+    setSharedItemValues({
+      ...sharedItemValues,
+      [itemId]: {
+        itemId,
+        value,
+        updatedAt: new Date().toISOString(),
+        updatedBy: '現在のユーザー',
+      },
+    });
+    setEditingItems({ ...editingItems, [itemId]: false });
+  };
+  
+  // カテゴリごとにグループ化（基本情報の営業・設計・IC・工務を除外）
+  const excludedIds = ['4', '5', '6', '7']; // 営業、設計、IC、工務
+  const filteredDefinitions = sharedItemDefinitions.filter(item => !excludedIds.includes(item.id));
+  const groupedItems = filteredDefinitions.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as { [category: string]: typeof sharedItemDefinitions });
+  
+  const renderSharedItemValue = (def: typeof sharedItemDefinitions[0]) => {
+    const value = sharedItemValues[def.id]?.value || null;
+    const isEditing = editingItems[def.id];
+    
+    if (isEditing) {
+      switch (def.type) {
+        case 'select':
+          return (
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <Select
+                value={value || ''}
+                onChange={(e) => handleSharedItemSave(def.id, e.target.value as string)}
+                onBlur={() => setEditingItems({ ...editingItems, [def.id]: false })}
+                autoFocus
+                sx={{ 
+                  height: 24,
+                  fontSize: '12px',
+                  '& .MuiSelect-select': { py: 0.25 },
+                }}
+              >
+                <MenuItem value="" sx={{ fontSize: '12px' }}>
+                  <em>未設定</em>
+                </MenuItem>
+                {def.options?.map(option => (
+                  <MenuItem key={option} value={option} sx={{ fontSize: '12px' }}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+        case 'text':
+          return (
+            <TextField
+              size="small"
+              value={value || ''}
+              onChange={(e) => handleSharedItemSave(def.id, e.target.value)}
+              onBlur={() => setEditingItems({ ...editingItems, [def.id]: false })}
+              autoFocus
+              sx={{
+                width: 150,
+                '& .MuiInputBase-input': {
+                  fontSize: '12px',
+                  py: 0.25,
+                },
+              }}
+            />
+          );
+        case 'date':
+          return (
+            <TextField
+              size="small"
+              type="date"
+              value={value || ''}
+              onChange={(e) => handleSharedItemSave(def.id, e.target.value)}
+              onBlur={() => setEditingItems({ ...editingItems, [def.id]: false })}
+              autoFocus
+              sx={{
+                width: 130,
+                '& .MuiInputBase-input': {
+                  fontSize: '12px',
+                  py: 0.25,
+                },
+              }}
+            />
+          );
+        case 'boolean':
+          return (
+            <Checkbox
+              size="small"
+              checked={value === true}
+              onChange={(e) => handleSharedItemSave(def.id, e.target.checked)}
+              sx={{ p: 0 }}
+            />
+          );
+        default:
+          return null;
+      }
+    }
+    
+    // 表示モード
+    if (value === null || value === '') {
+      return (
+        <Chip
+          label="未設定"
+          size="small"
+          variant="outlined"
+          sx={{ 
+            height: 20,
+            fontSize: '11px',
+            color: 'text.secondary',
+            borderColor: 'divider',
+            cursor: 'pointer',
+          }}
+          onClick={() => setEditingItems({ ...editingItems, [def.id]: true })}
+        />
+      );
+    }
+    
+    const getChipColor = () => {
+      if (def.id === '10') { // ローン状況
+        return value === '承認済' ? 'success' :
+               value === '審査中' ? 'warning' :
+               value === '申請前' ? 'default' : 'default';
+      }
+      if (def.id === '9') { // 土地状況
+        return value === '所有' ? 'success' :
+               value === '契約済' ? 'primary' :
+               value === '検討中' ? 'warning' : 'default';
+      }
+      return 'default';
+    };
+    
+    switch (def.type) {
+      case 'boolean':
+        return (
+          <Chip
+            label={value ? '有' : '無'}
+            size="small"
+            color={value ? 'success' : 'default'}
+            variant={value ? 'filled' : 'outlined'}
+            onClick={() => setEditingItems({ ...editingItems, [def.id]: true })}
+            sx={{ 
+              height: 24,
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'all 0.2s',
+              '&:hover': { 
+                transform: 'scale(1.05)',
+                boxShadow: 2,
+              },
+            }}
+          />
+        );
+      case 'date':
+        return (
+          <Chip
+            label={format(new Date(value as string), 'yy/MM/dd')}
+            size="small"
+            variant="outlined"
+            onClick={() => setEditingItems({ ...editingItems, [def.id]: true })}
+            sx={{ 
+              height: 24,
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'all 0.2s',
+              '&:hover': { 
+                transform: 'scale(1.05)',
+                boxShadow: 2,
+              },
+            }}
+          />
+        );
+      default:
+        return (
+          <Chip
+            label={value as string}
+            size="small"
+            color={getChipColor() as any}
+            onClick={() => setEditingItems({ ...editingItems, [def.id]: true })}
+            sx={{ 
+              height: 24,
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'all 0.2s',
+              '&:hover': { 
+                transform: 'scale(1.05)',
+                boxShadow: 2,
+              },
+            }}
+          />
+        );
+    }
+  };
   
   return (
     <Box>
       {/* プロジェクト概要カード */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+          {/* ヘッダー部分 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                 {project.name}
               </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
+              <Typography variant="body1" color="text.secondary">
                 {project.customer} 様
               </Typography>
-              
-              <Box sx={{ mt: 2, mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">進捗状況</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {progressPercentage}%
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={progressPercentage} 
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-              </Box>
-              
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid item xs={6} sm={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarToday fontSize="small" color="action" />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        開始日
-                      </Typography>
-                      <Typography variant="body2">
-                        {project.startDate}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Schedule fontSize="small" color="action" />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        完成予定
-                      </Typography>
-                      <Typography variant="body2">
-                        {project.completionDate}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AttachMoney fontSize="small" color="action" />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        予算
-                      </Typography>
-                      <Typography variant="body2">
-                        ¥{project.budget.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Warning 
-                      fontSize="small" 
-                      color={
-                        project.delayRisk === 'high' ? 'error' :
-                        project.delayRisk === 'medium' ? 'warning' :
-                        'success'
-                      } 
-                    />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        遅延リスク
-                      </Typography>
-                      <Typography variant="body2">
-                        {project.delayRisk === 'high' ? '高' :
-                         project.delayRisk === 'medium' ? '中' : '低'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
+            </Box>
             
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" gutterBottom>
-                担当者
-              </Typography>
-              <Grid container spacing={1}>
-                <Grid item xs={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>営</Avatar>
-                    <Typography variant="body2">{project.sales}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>設</Avatar>
-                    <Typography variant="body2">{project.design}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>IC</Avatar>
-                    <Typography variant="body2">{project.ic}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>工</Avatar>
-                    <Typography variant="body2">{project.construction}</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-              
-              <Box sx={{ mt: 2 }}>
-                <Chip 
-                  label={`ランク ${project.grade}`}
-                  color={
-                    project.grade === 'S' ? 'warning' :
-                    project.grade === 'A' ? 'primary' :
-                    'default'
-                  }
-                  size="small"
-                  sx={{ mr: 1 }}
-                />
-                <Chip 
-                  label={project.phase}
-                  size="small"
-                  sx={{
-                    backgroundColor: phases.find(p => p.name.includes(project.phase.split('・')[0]))?.color || '#ccc',
-                    color: 'white',
-                  }}
-                />
+            {/* 担当者情報 */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 2,
+              p: 1.5,
+              backgroundColor: 'grey.50',
+              borderRadius: 1,
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Avatar sx={{ width: 24, height: 24, fontSize: '12px', bgcolor: 'primary.main', color: 'white' }}>営</Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>営業</Typography>
+                  <Typography variant="body2" sx={{ fontSize: '12px' }}>{project.sales}</Typography>
+                </Box>
               </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Avatar sx={{ width: 24, height: 24, fontSize: '12px', bgcolor: 'secondary.main', color: 'white' }}>設</Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>設計</Typography>
+                  <Typography variant="body2" sx={{ fontSize: '12px' }}>{project.design}</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Avatar sx={{ width: 24, height: 24, fontSize: '12px', bgcolor: 'info.main', color: 'white' }}>IC</Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>IC</Typography>
+                  <Typography variant="body2" sx={{ fontSize: '12px' }}>{project.ic}</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Avatar sx={{ width: 24, height: 24, fontSize: '12px', bgcolor: 'warning.main', color: 'white' }}>工</Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>工務</Typography>
+                  <Typography variant="body2" sx={{ fontSize: '12px' }}>{project.construction}</Typography>
+                </Box>
+              </Box>
+            </Box>
+            
+            {/* ランクとフェーズ */}
+            <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+              <Chip 
+                label={`ランク ${project.grade}`}
+                color={
+                  project.grade === 'S' ? 'warning' :
+                  project.grade === 'A' ? 'primary' :
+                  'default'
+                }
+                size="small"
+              />
+              <Chip 
+                label={project.phase}
+                size="small"
+                sx={{
+                  backgroundColor: phases.find(p => p.name.includes(project.phase.split('・')[0]))?.color || '#ccc',
+                  color: 'white',
+                }}
+              />
+            </Box>
+          </Box>
+          
+          {/* 共有事項 */}
+          <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            backgroundColor: 'grey.50',
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+          }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>
+              共有事項
+            </Typography>
+            <Grid container spacing={2}>
+              {Object.entries(groupedItems).map(([category, items]) => (
+                <Grid item xs={12} md={6} lg={3} key={category}>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary" 
+                    sx={{ 
+                      display: 'block',
+                      mb: 1,
+                      fontWeight: 'medium',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      fontSize: '10px',
+                    }}
+                  >
+                    {category}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {items.map(def => (
+                      <Box key={def.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ fontSize: '11px', minWidth: '60px' }}
+                        >
+                          {def.name}:
+                        </Typography>
+                        {renderSharedItemValue(def)}
+                      </Box>
+                    ))}
+                  </Box>
+                </Grid>
+              ))}
             </Grid>
-          </Grid>
+          </Box>
+          
+          {/* 進捗状況と基本情報 */}
+          <Box sx={{ mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2">進捗状況</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {progressPercentage}%
+              </Typography>
+            </Box>
+            <LinearProgress 
+              variant="determinate" 
+              value={progressPercentage} 
+              sx={{ height: 8, borderRadius: 4, mb: 3 }}
+            />
+            
+            <Grid container spacing={2}>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarToday fontSize="small" color="action" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      開始日
+                    </Typography>
+                    <Typography variant="body2">
+                      {project.startDate}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Schedule fontSize="small" color="action" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      完成予定
+                    </Typography>
+                    <Typography variant="body2">
+                      {project.completionDate}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AttachMoney fontSize="small" color="action" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      予算
+                    </Typography>
+                    <Typography variant="body2">
+                      ¥{project.budget.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Warning 
+                    fontSize="small" 
+                    color={
+                      project.delayRisk === 'high' ? 'error' :
+                      project.delayRisk === 'medium' ? 'warning' :
+                      'success'
+                    } 
+                  />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      遅延リスク
+                    </Typography>
+                    <Typography variant="body2">
+                      {project.delayRisk === 'high' ? '高' :
+                       project.delayRisk === 'medium' ? '中' : '低'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
         </CardContent>
       </Card>
       
       {/* タブ */}
       <Paper sx={{ mb: 2 }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab label="タスク一覧" />
           <Tab label="フェーズ別表示" />
+          <Tab label="タスク一覧" />
           <Tab label="活動履歴" />
           <Tab label="ファイル" />
         </Tabs>
       </Paper>
       
       {/* タスク一覧タブ */}
-      <TabPanel value={tabValue} index={0}>
+      <TabPanel value={tabValue} index={1}>
         {/* タスクフィルター */}
         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <TextField
@@ -349,7 +634,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                     {phase.name}
                   </Typography>
                   <Chip 
-                    label={`${phaseTasks.filter(t => t.status === 'completed').length}/${phaseTasks.length}`}
+                    label={`${phaseTasks.filter(t => t.status === 'completed' || completedTasks.includes(t.id)).length}/${phaseTasks.length}`}
                     size="small"
                     sx={{ height: 20, fontSize: '11px' }}
                   />
@@ -367,21 +652,32 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                             task.status === 'delayed' ? '#f44336' :
                             '#e0e0e0'
                           }`,
+                          cursor: 'pointer',
                           '&:hover': {
                             boxShadow: 3,
                             transform: 'translateY(-2px)',
                             transition: 'all 0.2s',
                           },
                         }}
+                        onClick={() => router.push(`/projects/${projectId}/tasks/${encodeURIComponent(task.stageName)}`)}
                       >
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
-                              <CheckCircle 
-                                sx={{ 
-                                  fontSize: 18,
-                                  color: task.status === 'completed' ? 'success.main' : 'grey.400'
-                                }} 
+                              <Checkbox
+                                size="small"
+                                checked={task.status === 'completed' || completedTasks.includes(task.id)}
+                                onChange={() => handleTaskToggle(task.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                icon={<RadioButtonUnchecked />}
+                                checkedIcon={<CheckCircle />}
+                                sx={{
+                                  p: 0,
+                                  color: 'grey.400',
+                                  '&.Mui-checked': {
+                                    color: 'success.main',
+                                  }
+                                }}
                               />
                               <Typography variant="body1" fontWeight="medium" sx={{ fontSize: '14px' }}>
                                 {task.stageName}
@@ -401,7 +697,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                           </Box>
                           
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <Avatar sx={{ width: 20, height: 20, fontSize: '10px', bgcolor: 'primary.main' }}>
+                            <Avatar sx={{ width: 20, height: 20, fontSize: '10px', bgcolor: 'primary.main', color: 'white' }}>
                               {task.assignee[0]}
                             </Avatar>
                             <Typography variant="caption" color="text.secondary">
@@ -455,7 +751,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
       </TabPanel>
       
       {/* フェーズ別表示タブ - カンバンスタイル */}
-      <TabPanel value={tabValue} index={1}>
+      <TabPanel value={tabValue} index={0}>
         <Box sx={{ 
           display: 'flex', 
           gap: 2, 
@@ -474,7 +770,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
               return stageIndex >= startIndex && stageIndex < endIndex;
             });
             
-            const completedCount = phaseTasks.filter(t => t.status === 'completed').length;
+            const completedCount = phaseTasks.filter(t => t.status === 'completed' || completedTasks.includes(t.id)).length;
             const phaseProgress = phaseTasks.length > 0 ? Math.round((completedCount / phaseTasks.length) * 100) : 0;
             
             return (
@@ -550,17 +846,27 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                           transform: 'translateY(-2px)',
                         },
                       }}
+                      onClick={() => router.push(`/projects/${projectId}/tasks/${encodeURIComponent(task.stageName)}`)}
                     >
                       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                         {/* タスク名とステータス */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
                           <Box sx={{ display: 'flex', alignItems: 'start', gap: 1, flex: 1 }}>
-                            <CheckCircle 
-                              sx={{ 
-                                fontSize: 20,
-                                color: task.status === 'completed' ? 'success.main' : 'grey.300',
+                            <Checkbox
+                              size="small"
+                              checked={task.status === 'completed' || completedTasks.includes(task.id)}
+                              onChange={() => handleTaskToggle(task.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              icon={<RadioButtonUnchecked />}
+                              checkedIcon={<CheckCircle />}
+                              sx={{
+                                p: 0,
                                 mt: 0.2,
-                              }} 
+                                color: 'grey.300',
+                                '&.Mui-checked': {
+                                  color: 'success.main',
+                                }
+                              }}
                             />
                             <Box sx={{ flex: 1 }}>
                               <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
@@ -593,7 +899,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                         {/* 担当者と期限 */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Avatar sx={{ width: 24, height: 24, fontSize: '12px' }}>
+                            <Avatar sx={{ width: 24, height: 24, fontSize: '12px', bgcolor: 'grey.400', color: 'white' }}>
                               {task.assignee[0]}
                             </Avatar>
                             <Typography variant="caption" color="text.secondary">
@@ -680,7 +986,7 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
                   <React.Fragment key={activity.id}>
                     <ListItem alignItems="flex-start">
                       <ListItemIcon>
-                        <Avatar sx={{ width: 32, height: 32, fontSize: '14px' }}>
+                        <Avatar sx={{ width: 32, height: 32, fontSize: '14px', bgcolor: 'grey.500', color: 'white' }}>
                           {activity.author[0]}
                         </Avatar>
                       </ListItemIcon>

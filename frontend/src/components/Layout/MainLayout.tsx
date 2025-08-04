@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Badge, Tooltip, Divider } from '@mui/material';
-import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notifications, AccountCircle, Construction } from '@mui/icons-material';
+import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notifications, AccountCircle, Construction, Business, Search, Add } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
 
@@ -48,7 +48,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const menuItems = [
-    { text: '現場ボード', icon: <Dashboard />, path: '/' },
+    { text: 'ダッシュボード', icon: <Dashboard />, path: '/dashboard' },
+    { text: '現場ボード', icon: <Business />, path: '/' },
     { text: 'マイタスク', icon: <Assignment />, path: '/my-tasks' },
     { text: 'プロジェクト', icon: <People />, path: '/projects' },
     { text: '設定', icon: <Settings />, path: '/settings' },
@@ -58,22 +59,29 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ 
         p: 3, 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
         display: 'flex',
         alignItems: 'center',
         gap: 2,
       }}>
-        <Construction sx={{ fontSize: 32 }} />
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            component="img"
+            src="/dodo-logo.png"
+            alt="Dandori TODO"
+            sx={{
+              height: 40,
+              width: 'auto',
+            }}
+          />
           <Typography 
             variant="h6" 
-            sx={{ fontWeight: 700, letterSpacing: '0.5px' }}
+            sx={{ 
+              fontWeight: 700, 
+              letterSpacing: '0.5px',
+              color: 'text.primary'
+            }}
           >
-            建築TODO管理
-          </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.9 }}>
-            Construction Management
+            Dandori TODO
           </Typography>
         </Box>
       </Box>
@@ -167,15 +175,42 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography 
-            variant="h6" 
-            noWrap 
-            component="div"
-            sx={{ flexGrow: 1, fontWeight: 600 }}
-          >
-            {menuItems.find(item => item.path === router.pathname)?.text || 'Construction Todo System'}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* 検索バー */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              backgroundColor: 'rgba(0, 0, 0, 0.04)', 
+              borderRadius: 2,
+              px: 2,
+              py: 0.5,
+              minWidth: 300,
+            }}>
+              <Search sx={{ color: 'text.secondary', mr: 1 }} />
+              <Typography variant="body2" color="text.secondary">
+                プロジェクトを検索...
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {/* クイックアクション */}
+            <Tooltip title="新規プロジェクト">
+              <IconButton 
+                color="primary" 
+                sx={{ 
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
+                  width: 36,
+                  height: 36,
+                }}
+              >
+                <Add />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="通知">
               <IconButton color="inherit">
                 <Badge badgeContent={3} color="error">
@@ -224,7 +259,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 0,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
           backgroundColor: '#f8fafc',
