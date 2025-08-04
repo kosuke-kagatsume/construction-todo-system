@@ -68,6 +68,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log('Login API called:', { method: req.method, body: req.body });
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ detail: 'Method not allowed' });
   }

@@ -2,22 +2,19 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // パフォーマンス最適化
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
-  // 画像最適化
-  images: {
-    domains: [],
-    formats: ['image/avif', 'image/webp'],
-  },
+  
+  // APIルートのリライト設定
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/:path*',
+        source: '/api/v1/:path*',
+        destination: '/api/:path*',
       },
     ];
+  },
+  
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
   },
 };
 

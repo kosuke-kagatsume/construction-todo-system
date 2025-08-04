@@ -1,9 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// 本番環境ではNext.js APIルートを使用
+const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+  ? '/api' 
+  : 'http://localhost:8000/api/v1';
 
 export const api = axios.create({
-  baseURL: API_BASE_URL.startsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api/v1`,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,7 +34,12 @@ api.interceptors.response.use(
       // トークンの更新を試みる
       // TODO: リフレッシュトークンの実装
       localStorage.removeItem('access_token');
-      window.location.href = '/login';
+      localStorage.removeItem('refresh_token');
+      // ログインページへのリダイレクトは/loginが既にパブリックページなので
+      // 無限ループを避けるために現在のページがログインページでない場合のみ実行
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
