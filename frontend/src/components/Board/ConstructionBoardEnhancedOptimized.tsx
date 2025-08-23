@@ -759,24 +759,103 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
       
       <ScrollableArea>
         <GridTable>
-          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-            {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${80 * phase.stages}px` }}>
-                {phase.name}
+          <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 1 }}>
+            {/* 共通事項ヘッダー */}
+            {(Object.values(boardSettings.showAssignees).some(Boolean) || boardSettings.visibleSharedItems.length > 0) && (
+              <PhaseHeader
+                color="#666"
+                style={{ 
+                  width: `${
+                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 80 +
+                    boardSettings.visibleSharedItems.length * 80
+                  }px` 
+                }}
+              >
+                共通事項
               </PhaseHeader>
-            ))}
-            <GridRow>
-              {allStages.map((stage) => (
-                <GridCell key={stage} width={80} isHeader>
-                  {stage}
-                </GridCell>
-              ))}
-            </GridRow>
+            )}
+            {/* フェーズヘッダー */}
+            {phases.map((phase) => {
+              let startIndex = 0;
+              for (let i = 0; i < parseInt(phase.id) - 1; i++) {
+                startIndex += phases[i].stages;
+              }
+              const endIndex = startIndex + phase.stages;
+              const phaseStages = allStages.slice(startIndex, endIndex);
+              const visibleStageCount = phaseStages.filter(stage => boardSettings.visibleStages.includes(stage)).length;
+              
+              if (visibleStageCount === 0) return null;
+              
+              return (
+                <PhaseHeader
+                  key={phase.id}
+                  color={phase.color}
+                  style={{ width: `${visibleStageCount * 80}px` }}
+                >
+                  {phase.name}
+                </PhaseHeader>
+              );
+            })}
           </Box>
+
+          <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
+            {/* 担当者列 */}
+            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
+            
+            {/* 共有事項列 */}
+            {boardSettings.visibleSharedItems.map(itemId => {
+              const itemDef = sharedItemDefinitions.find(d => d.id === itemId);
+              return itemDef ? (
+                <GridCell key={itemId} width={80} isHeader>
+                  {itemDef.name}
+                </GridCell>
+              ) : null;
+            })}
+            
+            {/* ステージ列 */}
+            {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => (
+              <GridCell key={stage} width={80} isHeader>
+                {stage}
+              </GridCell>
+            ))}
+          </GridRow>
           
           {filteredProjectsWithPredictions.map((project) => (
             <GridRow key={project.id}>
-              {allStages.map((stage) => {
+              {/* 担当者列 */}
+              {boardSettings.showAssignees.sales && (
+                <GridCell width={80}>
+                  {project.sales || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.design && (
+                <GridCell width={80}>
+                  {project.design || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.ic && (
+                <GridCell width={80}>
+                  {project.ic || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.construction && (
+                <GridCell width={80}>
+                  {project.construction || '-'}
+                </GridCell>
+              )}
+              
+              {/* 共有事項列 */}
+              {boardSettings.visibleSharedItems.map(itemId => (
+                <GridCell key={itemId} width={80}>
+                  {getSharedItemValue(project.id, itemId) || '-'}
+                </GridCell>
+              ))}
+              
+              {/* ステージ列 */}
+              {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => {
                 const predictedDate = project.predictedDates?.[stage];
                 const actualDate = project.actualDates?.[stage];
                 
@@ -832,24 +911,103 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
       
       <ScrollableArea>
         <GridTable>
-          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-            {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${80 * phase.stages}px` }}>
-                {phase.name}
+          <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 1 }}>
+            {/* 共通事項ヘッダー */}
+            {(Object.values(boardSettings.showAssignees).some(Boolean) || boardSettings.visibleSharedItems.length > 0) && (
+              <PhaseHeader
+                color="#666"
+                style={{ 
+                  width: `${
+                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 80 +
+                    boardSettings.visibleSharedItems.length * 80
+                  }px` 
+                }}
+              >
+                共通事項
               </PhaseHeader>
-            ))}
-            <GridRow>
-              {allStages.map((stage) => (
-                <GridCell key={stage} width={80} isHeader>
-                  {stage}
-                </GridCell>
-              ))}
-            </GridRow>
+            )}
+            {/* フェーズヘッダー */}
+            {phases.map((phase) => {
+              let startIndex = 0;
+              for (let i = 0; i < parseInt(phase.id) - 1; i++) {
+                startIndex += phases[i].stages;
+              }
+              const endIndex = startIndex + phase.stages;
+              const phaseStages = allStages.slice(startIndex, endIndex);
+              const visibleStageCount = phaseStages.filter(stage => boardSettings.visibleStages.includes(stage)).length;
+              
+              if (visibleStageCount === 0) return null;
+              
+              return (
+                <PhaseHeader
+                  key={phase.id}
+                  color={phase.color}
+                  style={{ width: `${visibleStageCount * 80}px` }}
+                >
+                  {phase.name}
+                </PhaseHeader>
+              );
+            })}
           </Box>
+
+          <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
+            {/* 担当者列 */}
+            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
+            
+            {/* 共有事項列 */}
+            {boardSettings.visibleSharedItems.map(itemId => {
+              const itemDef = sharedItemDefinitions.find(d => d.id === itemId);
+              return itemDef ? (
+                <GridCell key={itemId} width={80} isHeader>
+                  {itemDef.name}
+                </GridCell>
+              ) : null;
+            })}
+            
+            {/* ステージ列 */}
+            {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => (
+              <GridCell key={stage} width={80} isHeader>
+                {stage}
+              </GridCell>
+            ))}
+          </GridRow>
           
           {filteredProjectsWithPredictions.map((project) => (
             <GridRow key={project.id}>
-              {allStages.map((stage) => {
+              {/* 担当者列 */}
+              {boardSettings.showAssignees.sales && (
+                <GridCell width={80}>
+                  {project.sales || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.design && (
+                <GridCell width={80}>
+                  {project.design || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.ic && (
+                <GridCell width={80}>
+                  {project.ic || '-'}
+                </GridCell>
+              )}
+              {boardSettings.showAssignees.construction && (
+                <GridCell width={80}>
+                  {project.construction || '-'}
+                </GridCell>
+              )}
+              
+              {/* 共有事項列 */}
+              {boardSettings.visibleSharedItems.map(itemId => (
+                <GridCell key={itemId} width={80}>
+                  {getSharedItemValue(project.id, itemId) || '-'}
+                </GridCell>
+              ))}
+              
+              {/* ステージ列 */}
+              {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => {
                 const actualDate = project.actualDates?.[stage];
                 const predictedDate = project.predictedDates?.[stage];
                 const hasActual = Boolean(actualDate && actualDate !== 'null');
