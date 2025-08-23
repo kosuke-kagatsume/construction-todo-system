@@ -71,7 +71,6 @@ const originalProjects: ProjectData[] = [
     phase: '施工',
     grade: 'A',
     rank: 'A',
-    rank: 'A',
     sales: '山田',
     design: '佐藤',
     ic: '鈴木',
