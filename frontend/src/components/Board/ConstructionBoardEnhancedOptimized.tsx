@@ -106,8 +106,10 @@ const GridCell = styled('div')<{ width?: number; isHeader?: boolean; isFixed?: b
   ({ width = 120, isHeader, isFixed, isPrediction }) => ({
     width: `${width}px`,
     minWidth: `${width}px`,
+    maxWidth: `${width}px`,
     padding: '4px 6px',
     borderRight: '1px solid #e0e0e0',
+    boxSizing: 'border-box',
     fontSize: '12px',
     fontFamily: '"メイリオ", "Meiryo", sans-serif',
     backgroundColor: isHeader ? '#1976d2' : isFixed ? '#f8f9fa' : isPrediction ? '#fff3e0' : '#ffffff',
@@ -172,15 +174,19 @@ const PredictionDateCell = styled(GridCell, {
     backgroundColor: showPrediction ? '#f3f8ff' : '#ffffff',
     borderLeft: showPrediction ? '2px solid #2196f3' : '1px solid #e0e0e0',
     position: 'relative',
-    '&::before': showPrediction ? {
-      content: '""',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '11px',
+    color: showPrediction ? '#1565c0' : '#666',
+    '&::after': showPrediction ? {
+      content: '"予"',
       position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(33, 150, 243, 0.05)',
-      pointerEvents: 'none',
+      top: '2px',
+      right: '2px',
+      fontSize: '9px',
+      color: '#2196f3',
+      fontWeight: 600,
     } : {},
   })
 );
@@ -192,17 +198,28 @@ const DualModeCell = styled(GridCell, {
     backgroundColor: hasActual ? '#f1f8e9' : hasPrediction ? '#f3f8ff' : '#ffffff',
     borderLeft: hasActual ? '2px solid #4caf50' : hasPrediction ? '2px solid #2196f3' : '1px solid #e0e0e0',
     position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '11px',
+    color: hasActual ? '#2e7d32' : hasPrediction ? '#1565c0' : '#666',
     minHeight: '30px',
-    padding: '2px',
-    '&::before': (hasActual || hasPrediction) ? {
-      content: '""',
+    '&::after': hasActual ? {
+      content: '"実"',
       position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: hasActual ? 'rgba(76, 175, 80, 0.05)' : 'rgba(33, 150, 243, 0.05)',
-      pointerEvents: 'none',
+      top: '2px',
+      right: '2px',
+      fontSize: '9px',
+      color: '#4caf50',
+      fontWeight: 600,
+    } : hasPrediction ? {
+      content: '"予"',
+      position: 'absolute',
+      top: '2px',
+      right: '2px',
+      fontSize: '9px',
+      color: '#2196f3',
+      fontWeight: 600,
     } : {},
   })
 );
@@ -603,7 +620,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 <PhaseHeader
                   key={phase.id}
                   color={phase.color}
-                  style={{ width: `${visibleStageCount * 60}px` }}
+                  style={{ width: `${visibleStageCount * 80}px` }}
                 >
                   {phase.name}
                 </PhaseHeader>
@@ -613,10 +630,10 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
 
           <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
             {/* 担当者列 */}
-            {boardSettings.showAssignees.sales && <GridCell width={60} isHeader>営業</GridCell>}
-            {boardSettings.showAssignees.design && <GridCell width={60} isHeader>設計</GridCell>}
-            {boardSettings.showAssignees.ic && <GridCell width={60} isHeader>IC</GridCell>}
-            {boardSettings.showAssignees.construction && <GridCell width={60} isHeader>工務</GridCell>}
+            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
             
             {/* 共有事項列 */}
             {boardSettings.visibleSharedItems.map(itemId => {
@@ -644,28 +661,28 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             >
               {/* 担当者データ */}
               {boardSettings.showAssignees.sales && (
-                <GridCell width={60}>
+                <GridCell width={80}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.sales}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.design && (
-                <GridCell width={60}>
+                <GridCell width={80}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.design}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.ic && (
-                <GridCell width={60}>
+                <GridCell width={80}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.ic}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.construction && (
-                <GridCell width={60}>
+                <GridCell width={80}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.construction}
                   </Typography>
@@ -698,7 +715,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <DateCell
                     key={stage}
-                    width={60}
+                    width={80}
                     isActual={!!date && date !== 'null'}
                   >
                     {formattedDate}
@@ -744,13 +761,13 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${80 * phase.stages}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage} width={60} isHeader>
+                <GridCell key={stage} width={80} isHeader>
                   {stage}
                 </GridCell>
               ))}
@@ -769,23 +786,13 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <PredictionDateCell 
                     key={`${project.id}-${stage}`} 
-                    width={60}
+                    width={80}
                     showPrediction={shouldShowPrediction}
                   >
-                    {shouldShowPrediction && (
-                      <Box sx={{ 
-                        fontSize: '11px', 
-                        color: '#2196f3',
-                        fontWeight: 500,
-                        textAlign: 'center',
-                        padding: '2px',
-                        backgroundColor: '#e3f2fd',
-                        borderRadius: '3px',
-                        border: '1px dashed #2196f3'
-                      }}>
-                        {predictedDate}
-                      </Box>
-                    )}
+                    {shouldShowPrediction && predictedDate ? 
+                      format(parseISO(predictedDate), 'M/d') : 
+                      ''
+                    }
                   </PredictionDateCell>
                 );
               })}
@@ -827,13 +834,13 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${80 * phase.stages}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage} width={60} isHeader>
+                <GridCell key={stage} width={80} isHeader>
                   {stage}
                 </GridCell>
               ))}
@@ -851,41 +858,16 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <DualModeCell 
                     key={`${project.id}-${stage}`} 
-                    width={60}
+                    width={80}
                     hasActual={hasActual}
                     hasPrediction={hasPrediction}
                   >
-                    <DualDateCell>
-                      {hasActual && (
-                        <Box sx={{ 
-                          fontSize: '11px', 
-                          color: '#2e7d32',
-                          fontWeight: 600,
-                          backgroundColor: '#e8f5e9',
-                          padding: '2px 4px',
-                          borderRadius: '3px',
-                          textAlign: 'center',
-                          border: '1px solid #4caf50',
-                          marginBottom: '1px'
-                        }}>
-                          {actualDate}
-                        </Box>
-                      )}
-                      {hasPrediction && (
-                        <Box sx={{ 
-                          fontSize: '11px', 
-                          color: '#2196f3',
-                          fontWeight: 500,
-                          backgroundColor: '#e3f2fd',
-                          padding: '2px 4px',
-                          borderRadius: '3px',
-                          textAlign: 'center',
-                          border: '1px dashed #2196f3'
-                        }}>
-                          {predictedDate}
-                        </Box>
-                      )}
-                    </DualDateCell>
+                    {hasActual && actualDate ? 
+                      format(parseISO(actualDate), 'M/d') : 
+                      hasPrediction && predictedDate ? 
+                        format(parseISO(predictedDate), 'M/d') : 
+                        ''
+                    }
                   </DualModeCell>
                 );
               })}
