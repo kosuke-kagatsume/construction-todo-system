@@ -805,6 +805,70 @@ export const allStages = [
   '取扱説明', '引き渡し準備', '引き渡し', 'アフター点検'
 ];
 
+// タスクの所要時間設定（営業日数）
+const taskDurations: { [key: string]: number } = {
+  '設計申込': 1,
+  'プランヒアリング': 3,
+  '敷地調査': 2,
+  'プラン提案': 5,
+  '見積提出': 3,
+  '設計契約': 2,
+  '実施設計': 14,
+  '確認申請': 21,
+  '契約前打合せ': 2,
+  '請負契約': 3,
+  '建築請負契約': 1,
+  '1st仕様': 3,
+  '2nd仕様': 3,
+  '3rd仕様': 3,
+  '4th仕様': 3,
+  '5th仕様': 3,
+  '仕様決定': 2,
+  '図面承認': 3,
+  '建築確認申請': 7,
+  '着工前準備': 3,
+  '地鎮祭準備': 1,
+  '地鎮祭': 1,
+  '地盤改良': 5,
+  '基礎着工': 1,
+  '基礎配筋検査': 2,
+  '基礎完了': 3,
+  '土台敷き': 2,
+  '上棟': 1,
+  '上棟式': 1,
+  '屋根工事': 7,
+  '外装工事': 10,
+  '内装下地': 7,
+  '内装仕上げ': 14,
+  '設備工事': 7,
+  '外構工事': 7,
+  '美装工事': 2,
+  '社内検査': 1,
+  '是正工事': 3,
+  '竣工検査': 1,
+  '完了検査': 1,
+  '取扱説明': 1,
+  '引き渡し準備': 2,
+  '引き渡し': 1,
+  'アフター点検': 1,
+};
+
+// 営業日を計算するヘルパー関数
+const addBusinessDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  let daysAdded = 0;
+  
+  while (daysAdded < days) {
+    result.setDate(result.getDate() + 1);
+    const dayOfWeek = result.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 土日以外
+      daysAdded++;
+    }
+  }
+  
+  return result;
+};
+
 // プロジェクト詳細用のタスクデータ
 export interface TaskDetail {
   id: string;
@@ -814,6 +878,8 @@ export interface TaskDetail {
   assignee: string;
   dueDate: string | null;
   completedDate: string | null;
+  predictedDate: string | null; // 予測日程を追加
+  duration: number; // 所要日数を追加
   status: 'pending' | 'in_progress' | 'completed' | 'delayed';
   priority: 'low' | 'medium' | 'high';
   checklist: ChecklistItem[];
@@ -848,10 +914,14 @@ export function getProjectDetails(projectId: string): TaskDetail[] {
   const project = mockProjects.find(p => p.id === projectId);
   if (!project) return [];
 
+  const actualDates = project.actualDates || {};
+  const predictedDates = project.predictedDates || {};
+
   return allStages.map((stageName, index) => {
-    const completedDate = project.stages[stageName];
+    const completedDate = actualDates[stageName];
+    const predictedDate = predictedDates[stageName];
     const status = completedDate ? 'completed' : 
-                  index < 20 ? 'in_progress' : 'pending';
+                  index < project.progress / 100 * allStages.length ? 'in_progress' : 'pending';
     
     return {
       id: `task-${projectId}-${index}`,
@@ -859,8 +929,10 @@ export function getProjectDetails(projectId: string): TaskDetail[] {
       stageName,
       description: getStageDescription(stageName),
       assignee: getAssigneeByStage(stageName, project),
-      dueDate: calculateDueDate(project.startDate, index),
+      dueDate: completedDate || predictedDate,
       completedDate,
+      predictedDate,
+      duration: taskDurations[stageName] || 3,
       status,
       priority: getStagePriority(stageName),
       checklist: generateChecklist(stageName),
@@ -869,6 +941,39 @@ export function getProjectDetails(projectId: string): TaskDetail[] {
     };
   });
 }
+
+// 予測日程の再計算関数
+export const recalculatePredictedDates = (projectId: string, startStage: string, startDate: string) => {
+  const project = mockProjects.find(p => p.id === projectId);
+  if (!project) return {};
+  
+  const predictedDates: { [key: string]: string } = {};
+  const actualDates = project.actualDates || {};
+  
+  let currentDate = new Date(startDate);
+  let startCalculating = false;
+  
+  for (const stage of allStages) {
+    if (stage === startStage) {
+      startCalculating = true;
+    }
+    
+    if (startCalculating) {
+      // 実績がある場合はそれを使用
+      if (actualDates[stage]) {
+        currentDate = new Date(actualDates[stage]);
+        predictedDates[stage] = actualDates[stage];
+      } else {
+        // 予測日程を計算
+        const duration = taskDurations[stage] || 3;
+        currentDate = addBusinessDays(currentDate, duration);
+        predictedDates[stage] = currentDate.toISOString().split('T')[0];
+      }
+    }
+  }
+  
+  return predictedDates;
+};
 
 function getStageDescription(stageName: string): string {
   const descriptions: { [key: string]: string } = {
@@ -891,8 +996,14 @@ function getAssigneeByStage(stageName: string, project: ProjectData): string {
 
 function calculateDueDate(startDate: string, stageIndex: number): string {
   const start = new Date(startDate);
-  start.setDate(start.getDate() + stageIndex * 7);
-  return start.toISOString().split('T')[0];
+  // 営業日ベースでの計算に変更
+  let currentDate = new Date(start);
+  for (let i = 0; i < stageIndex; i++) {
+    const stageName = allStages[i];
+    const duration = taskDurations[stageName] || 3;
+    currentDate = addBusinessDays(currentDate, duration);
+  }
+  return currentDate.toISOString().split('T')[0];
 }
 
 function getStagePriority(stageName: string): 'low' | 'medium' | 'high' {
