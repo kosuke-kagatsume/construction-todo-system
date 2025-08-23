@@ -40,5 +40,10 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "@mui/material": {
+      "@babel/runtime": "^7.23.0"
+    }
   }
 }

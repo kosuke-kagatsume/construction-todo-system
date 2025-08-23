@@ -48,8 +48,8 @@ export default function LoginPage() {
       localStorage.setItem('access_token', response.data.access_token);
       localStorage.setItem('refresh_token', response.data.refresh_token);
 
-      // ダッシュボードへリダイレクト
-      router.push('/dashboard');
+      // ホームページ（現場ボード）へリダイレクト
+      router.push('/');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(

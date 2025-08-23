@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// 本番環境ではNext.js APIルートを使用
-const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-  ? '/api' 
-  : 'http://localhost:8000/api/v1';
+// 開発環境でもNext.js APIルートを使用（モックAPI）
+const API_BASE_URL = '/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
