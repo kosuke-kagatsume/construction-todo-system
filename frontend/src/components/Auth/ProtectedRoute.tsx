@@ -19,12 +19,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     // 認証されていない場合はログインページへリダイレクト
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // ローディング中
-  if (isLoading) {
+  // ローディング中またはリダイレクト中
+  if (isLoading || !isAuthenticated) {
     return (
       <Box
         sx={{
@@ -37,11 +37,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <CircularProgress />
       </Box>
     );
-  }
-
-  // 認証されていない場合は何も表示しない（リダイレクト中）
-  if (!isAuthenticated) {
-    return null;
   }
 
   return <>{children}</>;

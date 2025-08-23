@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
 });
 
 // 認証が不要なページ
-const publicPages = ['/login', '/'];
+const publicPages = ['/login'];
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();

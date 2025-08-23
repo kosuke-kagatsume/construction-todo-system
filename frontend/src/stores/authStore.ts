@@ -26,7 +26,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // 初期状態はローディング中
   error: null,
 
   login: async (email: string, password: string) => {
@@ -78,7 +78,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) {
-      set({ isAuthenticated: false });
+      set({ 
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
       return;
     }
 
