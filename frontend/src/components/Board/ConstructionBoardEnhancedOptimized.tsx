@@ -715,39 +715,346 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
   // 他のビューは簡略化のため省略
   // 予測日程ボードのレンダリング - 予測スケジュールのみ表示
   const renderPredictionBoard = () => (
-    <Box sx={{ p: 3, textAlign: 'center' }}>
-      <Typography variant="h6" color="text.secondary">
-        予測日程ボード
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        予測スケジュール表示機能（工事中）
-      </Typography>
-    </Box>
+    <ExcelGrid>
+      <FixedColumn>
+        <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
+          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
+            概要
+          </PhaseHeader>
+          <GridRow>
+            <GridCell width={80} isHeader>邸名</GridCell>
+            <GridCell width={80} isHeader>顧客名</GridCell>
+            <GridCell width={50} isHeader>ランク</GridCell>
+            <GridCell width={50} isHeader>進捗</GridCell>
+            <GridCell width={80} isHeader>フェーズ</GridCell>
+          </GridRow>
+        </Box>
+        {filteredProjectsWithPredictions.map((project) => (
+          <ProjectRow
+            key={project.id}
+            project={project}
+            onClick={() => handleProjectClick(project.id)}
+            boardSettings={boardSettings}
+            getSharedItemValue={getSharedItemValue}
+          />
+        ))}
+      </FixedColumn>
+      
+      <ScrollableArea>
+        <GridTable>
+          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+            {phases.map((phase) => (
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
+                {phase.name}
+              </PhaseHeader>
+            ))}
+            <GridRow>
+              {allStages.map((stage) => (
+                <GridCell key={stage} width={60} isHeader>
+                  {stage}
+                </GridCell>
+              ))}
+            </GridRow>
+          </Box>
+          
+          {filteredProjectsWithPredictions.map((project) => (
+            <GridRow key={project.id}>
+              {allStages.map((stage) => {
+                const predictedDate = project.predictedDates?.[stage];
+                const actualDate = project.actualDates?.[stage];
+                
+                // 予測日程ボードでは予測日程のみ表示（実績がない工程のみ）
+                const shouldShowPrediction = !actualDate && predictedDate;
+                
+                return (
+                  <PredictionDateCell 
+                    key={`${project.id}-${stage}`} 
+                    width={60}
+                    showPrediction={shouldShowPrediction}
+                  >
+                    {shouldShowPrediction && (
+                      <Box sx={{ 
+                        fontSize: '11px', 
+                        color: '#2196f3',
+                        fontWeight: 500,
+                        textAlign: 'center',
+                        padding: '2px',
+                        backgroundColor: '#e3f2fd',
+                        borderRadius: '3px',
+                        border: '1px dashed #2196f3'
+                      }}>
+                        {predictedDate}
+                      </Box>
+                    )}
+                  </PredictionDateCell>
+                );
+              })}
+            </GridRow>
+          ))}
+        </GridTable>
+      </ScrollableArea>
+    </ExcelGrid>
   );
   
   // 実施・予測日程ボードのレンダリング - 実績と予測の組み合わせ表示
   const renderDualBoard = () => (
-    <Box sx={{ p: 3, textAlign: 'center' }}>
-      <Typography variant="h6" color="text.secondary">
-        実施・予測日程ボード
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        実績・予測スケジュール組み合わせ表示機能（工事中）
-      </Typography>
-    </Box>
+    <ExcelGrid>
+      <FixedColumn>
+        <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
+          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
+            概要
+          </PhaseHeader>
+          <GridRow>
+            <GridCell width={80} isHeader>邸名</GridCell>
+            <GridCell width={80} isHeader>顧客名</GridCell>
+            <GridCell width={50} isHeader>ランク</GridCell>
+            <GridCell width={50} isHeader>進捗</GridCell>
+            <GridCell width={80} isHeader>フェーズ</GridCell>
+          </GridRow>
+        </Box>
+        {filteredProjectsWithPredictions.map((project) => (
+          <ProjectRow
+            key={project.id}
+            project={project}
+            onClick={() => handleProjectClick(project.id)}
+            boardSettings={boardSettings}
+            getSharedItemValue={getSharedItemValue}
+          />
+        ))}
+      </FixedColumn>
+      
+      <ScrollableArea>
+        <GridTable>
+          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+            {phases.map((phase) => (
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
+                {phase.name}
+              </PhaseHeader>
+            ))}
+            <GridRow>
+              {allStages.map((stage) => (
+                <GridCell key={stage} width={60} isHeader>
+                  {stage}
+                </GridCell>
+              ))}
+            </GridRow>
+          </Box>
+          
+          {filteredProjectsWithPredictions.map((project) => (
+            <GridRow key={project.id}>
+              {allStages.map((stage) => {
+                const actualDate = project.actualDates?.[stage];
+                const predictedDate = project.predictedDates?.[stage];
+                const hasActual = actualDate && actualDate !== 'null';
+                const hasPrediction = !hasActual && predictedDate;
+                
+                return (
+                  <DualModeCell 
+                    key={`${project.id}-${stage}`} 
+                    width={60}
+                    hasActual={hasActual}
+                    hasPrediction={hasPrediction}
+                  >
+                    <DualDateCell>
+                      {hasActual && (
+                        <Box sx={{ 
+                          fontSize: '11px', 
+                          color: '#2e7d32',
+                          fontWeight: 600,
+                          backgroundColor: '#e8f5e9',
+                          padding: '2px 4px',
+                          borderRadius: '3px',
+                          textAlign: 'center',
+                          border: '1px solid #4caf50',
+                          marginBottom: '1px'
+                        }}>
+                          {actualDate}
+                        </Box>
+                      )}
+                      {hasPrediction && (
+                        <Box sx={{ 
+                          fontSize: '11px', 
+                          color: '#2196f3',
+                          fontWeight: 500,
+                          backgroundColor: '#e3f2fd',
+                          padding: '2px 4px',
+                          borderRadius: '3px',
+                          textAlign: 'center',
+                          border: '1px dashed #2196f3'
+                        }}>
+                          {predictedDate}
+                        </Box>
+                      )}
+                    </DualDateCell>
+                  </DualModeCell>
+                );
+              })}
+            </GridRow>
+          ))}
+        </GridTable>
+      </ScrollableArea>
+    </ExcelGrid>
   );
   
   // 一覧確認のレンダリング - 詳細データの一覧表示
   const renderListView = () => (
-    <Box sx={{ p: 3, textAlign: 'center' }}>
-      <Typography variant="h6" color="text.secondary">
-        一覧確認
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        プロジェクト詳細一覧表示機能（工事中）
-      </Typography>
+    <Box sx={{ height: 'calc(100vh - 200px)', overflow: 'auto' }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+            プロジェクト詳細一覧
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            全{filteredProjectsWithPredictions.length}件のプロジェクト詳細情報
+          </Typography>
+        </Box>
+        
+        <Box sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead style={{ backgroundColor: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
+              <tr>
+                <th style={listHeaderStyle}>邸名</th>
+                <th style={listHeaderStyle}>顧客名</th>
+                <th style={listHeaderStyle}>ランク</th>
+                <th style={listHeaderStyle}>進捗</th>
+                <th style={listHeaderStyle}>フェーズ</th>
+                <th style={listHeaderStyle}>営業</th>
+                <th style={listHeaderStyle}>設計</th>
+                <th style={listHeaderStyle}>IC</th>
+                <th style={listHeaderStyle}>工務</th>
+                <th style={listHeaderStyle}>予算</th>
+                <th style={listHeaderStyle}>設計申込</th>
+                <th style={listHeaderStyle}>プラン提案</th>
+                <th style={listHeaderStyle}>請負契約</th>
+                <th style={listHeaderStyle}>1st仕様</th>
+                <th style={listHeaderStyle}>地鎮祭</th>
+                <th style={listHeaderStyle}>基礎着工</th>
+                <th style={listHeaderStyle}>上棟</th>
+                <th style={listHeaderStyle}>屋根工事</th>
+                <th style={listHeaderStyle}>内装仕上</th>
+                <th style={listHeaderStyle}>引き渡し</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProjectsWithPredictions.map((project, index) => (
+                <tr 
+                  key={project.id} 
+                  style={{ 
+                    backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e3f2fd';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                  }}
+                  onClick={() => handleProjectClick(project.id)}
+                >
+                  <td style={listCellStyle}>{project.name}</td>
+                  <td style={listCellStyle}>{project.customer}</td>
+                  <td style={listCellStyle}>
+                    <Chip 
+                      label={project.rank} 
+                      size="small" 
+                      color={project.rank === 'A' ? 'error' : project.rank === 'B' ? 'warning' : 'default'}
+                      sx={{ fontSize: '10px', height: '18px' }}
+                    />
+                  </td>
+                  <td style={listCellStyle}>{project.progress}%</td>
+                  <td style={listCellStyle}>{project.phase}</td>
+                  <td style={listCellStyle}>{project.sales}</td>
+                  <td style={listCellStyle}>{project.design}</td>
+                  <td style={listCellStyle}>{project.ic}</td>
+                  <td style={listCellStyle}>{project.construction}</td>
+                  <td style={listCellStyle}>¥{(project.budget / 10000).toFixed(0)}万</td>
+                  
+                  {/* 主要工程の実績・予測日程 */}
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['設計申込'] || 
+                     (project.predictedDates?.['設計申込'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['設計申込']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['プラン提案'] || 
+                     (project.predictedDates?.['プラン提案'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['プラン提案']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['請負契約'] || 
+                     (project.predictedDates?.['請負契約'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['請負契約']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['1st仕様打合せ'] || 
+                     (project.predictedDates?.['1st仕様打合せ'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['1st仕様打合せ']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['地鎮祭'] || 
+                     (project.predictedDates?.['地鎮祭'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['地鎮祭']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['基礎着工'] || 
+                     (project.predictedDates?.['基礎着工'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['基礎着工']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['上棟'] || 
+                     (project.predictedDates?.['上棟'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['上棟']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['屋根工事'] || 
+                     (project.predictedDates?.['屋根工事'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['屋根工事']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['内装仕上げ'] || 
+                     (project.predictedDates?.['内装仕上げ'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['内装仕上げ']}</span> : '-')}
+                  </td>
+                  <td style={listCellStyle}>
+                    {project.actualDates?.['引き渡し'] || 
+                     (project.predictedDates?.['引き渡し'] ? 
+                       <span style={{ color: '#2196f3', fontStyle: 'italic' }}>{project.predictedDates['引き渡し']}</span> : '-')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Box>
+      </Paper>
     </Box>
   );
+
+  // 一覧表示用のスタイル
+  const listHeaderStyle = {
+    padding: '8px 6px',
+    backgroundColor: '#e3f2fd',
+    borderBottom: '2px solid #1976d2',
+    borderRight: '1px solid #ccc',
+    fontWeight: 'bold',
+    fontSize: '11px',
+    color: '#1565c0',
+    textAlign: 'center' as const,
+    whiteSpace: 'nowrap' as const,
+    minWidth: '80px',
+  };
+
+  const listCellStyle = {
+    padding: '6px 4px',
+    borderBottom: '1px solid #e0e0e0',
+    borderRight: '1px solid #e0e0e0',
+    fontSize: '11px',
+    textAlign: 'center' as const,
+    whiteSpace: 'nowrap' as const,
+    maxWidth: '100px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  };
 
   return (
     <Box>

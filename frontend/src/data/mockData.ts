@@ -1,5 +1,41 @@
 import { convertToNewStages } from './stageMapping';
 
+// 基本的な工程一覧（allStagesと同じ）
+const baseStages = [
+  '設計申込', 'プランヒアリング', '敷地調査', 'プラン提案', '見積提出', '設計契約', '実施設計', '確認申請',
+  '契約前打合せ', '請負契約', '建築請負契約', 
+  '1st仕様打合せ', '2nd仕様打合せ', '3rd仕様打合せ', '4th仕様打合せ', '5th仕様打合せ', '仕様決定', '図面承認', '建築確認申請', '着工前準備', '地鎮祭準備', '地鎮祭',
+  '地盤改良', '基礎着工', '基礎配筋検査', '基礎完了', '土台敷き', '上棟', '上棟式', '屋根工事', '外装工事', '内装下地', '内装仕上げ', '設備工事', '外構工事', '美装工事', '社内検査', '是正工事', '竣工検査', '完了検査',
+  '取扱説明', '引き渡し準備', '引き渡し', 'アフター点検'
+];
+
+// プロジェクトごとにactualDatesとpredictedDatesを生成するヘルパー
+const generateProjectDates = (projectId: string, progress: number) => {
+  const actualDates: { [key: string]: string | null } = {};
+  const predictedDates: { [key: string]: string | null } = {};
+  
+  // 進捗に応じて実績日程を設定
+  const completedStages = Math.floor(baseStages.length * (progress / 100));
+  
+  baseStages.forEach((stage, index) => {
+    if (index < completedStages) {
+      // 実績日程：プロジェクト開始から順次設定
+      const dateOffset = index * 7; // 1週間間隔
+      const baseDate = new Date('2024-01-15');
+      baseDate.setDate(baseDate.getDate() + dateOffset);
+      actualDates[stage] = baseDate.toISOString().split('T')[0];
+    } else {
+      // 予測日程：現在から将来へ
+      const dateOffset = (index - completedStages) * 7; // 1週間間隔
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() + dateOffset + 7);
+      predictedDates[stage] = baseDate.toISOString().split('T')[0];
+    }
+  });
+  
+  return { actualDates, predictedDates };
+};
+
 // モックデータ定義
 export interface ProjectData {
   id: string;
@@ -7,6 +43,7 @@ export interface ProjectData {
   customer: string;
   phase: string;
   grade: string;
+  rank: string; // A, B, Cランク
   sales: string;
   design: string;
   ic: string;
@@ -19,6 +56,8 @@ export interface ProjectData {
   completionDate: string;
   budget: number;
   stages: { [key: string]: string | null };
+  actualDates: { [key: string]: string | null }; // 実績日程
+  predictedDates: { [key: string]: string | null }; // 予測日程
   delayRisk: 'low' | 'medium' | 'high';
   notes: string;
 }
@@ -31,6 +70,8 @@ const originalProjects: ProjectData[] = [
     customer: '田中太郎',
     phase: '施工',
     grade: 'A',
+    rank: 'A',
+    rank: 'A',
     sales: '山田',
     design: '佐藤',
     ic: '鈴木',
@@ -44,6 +85,63 @@ const originalProjects: ProjectData[] = [
     budget: 35000000,
     delayRisk: 'low',
     notes: '順調に進行中。天候にも恵まれている。',
+    actualDates: {
+      '設計申込': '2024-01-15',
+      'プランヒアリング': '2024-01-20',
+      '敷地調査': '2024-01-22',
+      'プラン提案': '2024-01-25',
+      '見積提出': '2024-01-28',
+      '設計契約': '2024-02-01',
+      '実施設計': '2024-02-05',
+      '確認申請': '2024-02-10',
+      '契約前打合せ': '2024-02-20',
+      '請負契約': '2024-02-25',
+      '建築請負契約': '2024-03-01',
+      '1st仕様打合せ': '2024-03-05',
+      '2nd仕様打合せ': '2024-03-10',
+      '3rd仕様打合せ': null,
+      '地鎮祭準備': '2024-03-10',
+      '地鎮祭': '2024-03-12',
+      '地盤改良': null,
+      '基礎着工': '2024-03-15',
+      '基礎配筋検査': '2024-03-20',
+      '基礎完了': '2024-03-25',
+      '土台敷き': '2024-04-10',
+      '上棟': '2024-04-20',
+      '屋根工事': null,
+      '外装工事': null,
+      '内装下地': null,
+      '内装仕上げ': null,
+      '設備工事': null,
+      '外構工事': null,
+      '美装工事': null,
+      '社内検査': null,
+      '是正工事': null,
+      '竣工検査': null,
+      '完了検査': null,
+      '取扱説明': null,
+      '引き渡し準備': null,
+      '引き渡し': null,
+      'アフター点検': null
+    },
+    predictedDates: {
+      '3rd仕様打合せ': '2024-03-15',
+      '屋根工事': '2024-04-25',
+      '外装工事': '2024-05-10',
+      '内装下地': '2024-05-20',
+      '内装仕上げ': '2024-06-05',
+      '設備工事': '2024-06-15',
+      '外構工事': '2024-06-25',
+      '美装工事': '2024-07-05',
+      '社内検査': '2024-07-10',
+      '是正工事': '2024-07-15',
+      '竣工検査': '2024-07-20',
+      '完了検査': '2024-07-25',
+      '取扱説明': '2024-07-30',
+      '引き渡し準備': '2024-08-05',
+      '引き渡し': '2024-08-10',
+      'アフター点検': '2024-08-30'
+    },
     stages: {
       '設計申込': '01/15',
       'プランヒアリング': '01/20',
@@ -93,6 +191,7 @@ const originalProjects: ProjectData[] = [
     customer: '佐藤花子',
     phase: '契約',
     grade: 'B',
+    rank: 'B',
     sales: '田中',
     design: '山田',
     ic: '高橋',
@@ -105,7 +204,11 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/09/15',
     budget: 28000000,
     delayRisk: 'medium',
+    actualDates: {},
+    predictedDates: {},
     notes: 'プラン変更により若干の遅延。顧客と調整中。',
+    actualDates: {},
+    predictedDates: {},
     stages: {
       '設計申込': '02/01',
       'プランヒアリング': '02/05',
@@ -155,6 +258,7 @@ const originalProjects: ProjectData[] = [
     customer: '鈴木一郎',
     phase: '竣工',
     grade: 'S',
+    rank: 'S',
     sales: '高橋',
     design: '田中',
     ic: '山田',
@@ -167,6 +271,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/04/30',
     budget: 45000000,
     delayRisk: 'low',
+    actualDates: {},
+    predictedDates: {},
     notes: '高級仕様。竣工間近。',
     stages: {
       '設計申込': '11/01',
@@ -217,6 +323,7 @@ const originalProjects: ProjectData[] = [
     customer: '山田次郎',
     phase: '打ち合わせ',
     grade: 'A',
+    rank: 'A',
     sales: '佐藤',
     design: '鈴木',
     ic: '田中',
@@ -229,6 +336,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/10/15',
     budget: 32000000,
     delayRisk: 'low',
+    actualDates: {},
+    predictedDates: {},
     notes: '仕様打ち合わせ中。順調。',
     stages: {
       '設計申込': '02/15',
@@ -279,6 +388,7 @@ const originalProjects: ProjectData[] = [
     customer: '高橋健一',
     phase: '追客・設計',
     grade: 'B',
+    rank: 'B',
     sales: '山田',
     design: '高橋',
     ic: '佐藤',
@@ -291,6 +401,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/11/30',
     budget: 30000000,
     delayRisk: 'medium',
+    actualDates: {},
+    predictedDates: {},
     notes: 'プラン検討中。予算調整あり。',
     stages: {
       '設計申込': '03/01',
@@ -341,6 +453,7 @@ const originalProjects: ProjectData[] = [
     customer: '伊藤美咲',
     phase: '施工',
     grade: 'A',
+    rank: 'A',
     sales: '鈴木',
     design: '山田',
     ic: '高橋',
@@ -353,6 +466,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/06/30',
     budget: 38000000,
     delayRisk: 'low',
+    actualDates: {},
+    predictedDates: {},
     notes: '内装工事中。',
     stages: {
       '設計申込': '12/01',
@@ -403,6 +518,7 @@ const originalProjects: ProjectData[] = [
     customer: '渡辺浩二',
     phase: '契約',
     grade: 'S',
+    rank: 'S',
     sales: '高橋',
     design: '田中',
     ic: '鈴木',
@@ -415,6 +531,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/10/30',
     budget: 50000000,
     delayRisk: 'high',
+    actualDates: {},
+    predictedDates: {},
     notes: '高級仕様。仕様決定に時間がかかっている。',
     stages: {
       '設計申込': '02/20',
@@ -465,6 +583,7 @@ const originalProjects: ProjectData[] = [
     customer: '中村裕子',
     phase: '竣工',
     grade: 'B',
+    rank: 'B',
     sales: '田中',
     design: '佐藤',
     ic: '山田',
@@ -477,6 +596,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/03/30',
     budget: 29000000,
     delayRisk: 'low',
+    actualDates: {},
+    predictedDates: {},
     notes: '完成。引渡し済み。',
     stages: {
       '設計申込': '10/01',
@@ -527,6 +648,7 @@ const originalProjects: ProjectData[] = [
     customer: '小林健太',
     phase: '打ち合わせ',
     grade: 'A',
+    rank: 'A',
     sales: '佐藤',
     design: '高橋',
     ic: '田中',
@@ -539,6 +661,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/09/20',
     budget: 33000000,
     delayRisk: 'high',
+    actualDates: {},
+    predictedDates: {},
     notes: '予算調整のため一時停止中。',
     stages: {
       '設計申込': '01/20',
@@ -589,6 +713,7 @@ const originalProjects: ProjectData[] = [
     customer: '加藤直樹',
     phase: '追客・設計',
     grade: 'C',
+    rank: 'C',
     sales: '山田',
     design: '鈴木',
     ic: '佐藤',
@@ -601,6 +726,8 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/12/20',
     budget: 25000000,
     delayRisk: 'low',
+    actualDates: {},
+    predictedDates: {},
     notes: 'コンパクト住宅。初回プラン提案済み。',
     stages: {
       '設計申込': '03/15',
@@ -647,11 +774,17 @@ const originalProjects: ProjectData[] = [
   }
 ];
 
-// 新しいステージ構成に変換したプロジェクトデータ
-export const mockProjects: ProjectData[] = originalProjects.map(project => ({
-  ...project,
-  stages: convertToNewStages(project.stages)
-}));
+// 新しいステージ構成に変換し、実績・予測日程を追加したプロジェクトデータ
+export const mockProjects: ProjectData[] = originalProjects.map(project => {
+  const { actualDates, predictedDates } = generateProjectDates(project.id, project.progress);
+  
+  return {
+    ...project,
+    actualDates: project.actualDates || actualDates, // 既存データがあればそれを優先
+    predictedDates: project.predictedDates || predictedDates,
+    stages: convertToNewStages(project.stages)
+  };
+});
 
 // フェーズとステージの定義
 export const phases = [
