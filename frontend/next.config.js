@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
   transpilePackages: ['@mui/material', '@mui/icons-material', '@mui/x-data-grid'],
   experimental: {
