@@ -715,325 +715,39 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
   // 他のビューは簡略化のため省略
   // 予測日程ボードのレンダリング - 予測スケジュールのみ表示
   const renderPredictionBoard = () => (
-    <ExcelGrid>
-      <FixedColumn>
-        <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
-          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
-            概要
-          </PhaseHeader>
-          <GridRow>
-            <GridCell width={80} isHeader>邸名</GridCell>
-            <GridCell width={80} isHeader>顧客名</GridCell>
-            <GridCell width={50} isHeader>ランク</GridCell>
-            <GridCell width={50} isHeader>進捗</GridCell>
-            <GridCell width={80} isHeader>フェーズ</GridCell>
-          </GridRow>
-        </Box>
-        {filteredProjectsWithPredictions.map((project) => (
-          <ProjectRow
-            key={project.id}
-            project={project}
-            onClick={() => handleProjectClick(project.id)}
-            boardSettings={boardSettings}
-            getSharedItemValue={getSharedItemValue}
-          />
-        ))}
-      </FixedColumn>
-      
-      <ScrollableArea>
-        <GridTable>
-          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-            {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
-                {phase.name}
-              </PhaseHeader>
-            ))}
-            <GridRow>
-              {allStages.map((stage) => (
-                <GridCell key={stage} width={60} isHeader>
-                  {stage}
-                </GridCell>
-              ))}
-            </GridRow>
-          </Box>
-          
-          {filteredProjectsWithPredictions.map((project) => (
-            <GridRow key={project.id}>
-              {allStages.map((stage) => {
-                const predictedDate = project.predictedDates?.[stage];
-                const actualDate = project.actualDates?.[stage];
-                
-                // 予測日程ボードでは予測日程のみ表示（実績がない工程のみ）
-                const shouldShowPrediction = !actualDate && predictedDate;
-                
-                return (
-                  <PredictionDateCell 
-                    key={`${project.id}-${stage}`} 
-                    width={60}
-                    showPrediction={shouldShowPrediction}
-                  >
-                    {shouldShowPrediction && (
-                      <Box sx={{ 
-                        fontSize: '11px', 
-                        color: '#2196f3',
-                        fontWeight: 500,
-                        textAlign: 'center',
-                        padding: '2px',
-                        backgroundColor: '#e3f2fd',
-                        borderRadius: '3px',
-                        border: '1px dashed #2196f3'
-                      }}>
-                        {predictedDate}
-                      </Box>
-                    )}
-                  </PredictionDateCell>
-                );
-              })}
-            </GridRow>
-          ))}
-        </GridTable>
-      </ScrollableArea>
-    </ExcelGrid>
+    <Box sx={{ p: 3, textAlign: 'center' }}>
+      <Typography variant="h6" color="text.secondary">
+        予測日程ボード
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        予測スケジュール表示機能（工事中）
+      </Typography>
+    </Box>
   );
   
   // 実施・予測日程ボードのレンダリング - 実績と予測の組み合わせ表示
   const renderDualBoard = () => (
-    <ExcelGrid>
-      <FixedColumn>
-        <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
-          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
-            概要
-          </PhaseHeader>
-          <GridRow>
-            <GridCell width={80} isHeader>邸名</GridCell>
-            <GridCell width={80} isHeader>顧客名</GridCell>
-            <GridCell width={50} isHeader>ランク</GridCell>
-            <GridCell width={50} isHeader>進捗</GridCell>
-            <GridCell width={80} isHeader>フェーズ</GridCell>
-          </GridRow>
-        </Box>
-        {filteredProjectsWithPredictions.map((project) => (
-          <ProjectRow
-            key={project.id}
-            project={project}
-            onClick={() => handleProjectClick(project.id)}
-            boardSettings={boardSettings}
-            getSharedItemValue={getSharedItemValue}
-          />
-        ))}
-      </FixedColumn>
-      
-      <ScrollableArea>
-        <GridTable>
-          <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-            {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
-                {phase.name}
-              </PhaseHeader>
-            ))}
-            <GridRow>
-              {allStages.map((stage) => (
-                <GridCell key={stage} width={60} isHeader>
-                  {stage}
-                </GridCell>
-              ))}
-            </GridRow>
-          </Box>
-          
-          {filteredProjectsWithPredictions.map((project) => (
-            <GridRow key={project.id}>
-              {allStages.map((stage) => {
-                const actualDate = project.actualDates?.[stage];
-                const predictedDate = project.predictedDates?.[stage];
-                const hasActual = actualDate && actualDate !== 'null';
-                const hasPrediction = !hasActual && predictedDate;
-                
-                return (
-                  <DualModeCell 
-                    key={`${project.id}-${stage}`} 
-                    width={60}
-                    hasActual={hasActual}
-                    hasPrediction={hasPrediction}
-                  >
-                    <DualDateCell>
-                      {hasActual && (
-                        <Box sx={{ 
-                          fontSize: '11px', 
-                          color: '#2e7d32',
-                          fontWeight: 600,
-                          backgroundColor: '#e8f5e9',
-                          padding: '2px 4px',
-                          borderRadius: '3px',
-                          textAlign: 'center',
-                          border: '1px solid #4caf50'
-                        }}>
-                          {actualDate}
-                        </Box>
-                      )}
-                      {hasPrediction && (
-                        <Box sx={{ 
-                          fontSize: '11px', 
-                          color: '#2196f3',
-                          fontWeight: 500,
-                          backgroundColor: '#e3f2fd',
-                          padding: '2px 4px',
-                          borderRadius: '3px',
-                          textAlign: 'center',
-                          border: '1px dashed #2196f3'
-                        }}>
-                          {predictedDate}
-                        </Box>
-                      )}
-                    </DualDateCell>
-                  </DualModeCell>
-                );
-              })}
-            </GridRow>
-          ))}
-        </GridTable>
-      </ScrollableArea>
-    </ExcelGrid>
+    <Box sx={{ p: 3, textAlign: 'center' }}>
+      <Typography variant="h6" color="text.secondary">
+        実施・予測日程ボード
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        実績・予測スケジュール組み合わせ表示機能（工事中）
+      </Typography>
+    </Box>
   );
   
   // 一覧確認のレンダリング - 詳細データの一覧表示
   const renderListView = () => (
-    <Box sx={{ height: 'calc(100vh - 200px)', overflow: 'auto' }}>
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-            プロジェクト詳細一覧
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            全{filteredProjectsWithPredictions.length}件のプロジェクト詳細情報
-          </Typography>
-        </Box>
-        
-        <Box sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead style={{ backgroundColor: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
-              <tr>
-                <th style={listHeaderStyle}>邸名</th>
-                <th style={listHeaderStyle}>顧客名</th>
-                <th style={listHeaderStyle}>ランク</th>
-                <th style={listHeaderStyle}>進捗</th>
-                <th style={listHeaderStyle}>フェーズ</th>
-                <th style={listHeaderStyle}>営業</th>
-                <th style={listHeaderStyle}>設計</th>
-                <th style={listHeaderStyle}>IC</th>
-                <th style={listHeaderStyle}>工務</th>
-                <th style={listHeaderStyle}>土地状況</th>
-                <th style={listHeaderStyle}>設計申込</th>
-                <th style={listHeaderStyle}>1stプラン</th>
-                <th style={listHeaderStyle}>2ndプラン</th>
-                <th style={listHeaderStyle}>3rdプラン</th>
-                <th style={listHeaderStyle}>請負契約</th>
-                <th style={listHeaderStyle}>1st仕様打合</th>
-                <th style={listHeaderStyle}>2nd仕様打合</th>
-                <th style={listHeaderStyle}>3rd仕様打合</th>
-                <th style={listHeaderStyle}>着工前確認</th>
-                <th style={listHeaderStyle}>地鎮祭</th>
-                <th style={listHeaderStyle}>基礎着工</th>
-                <th style={listHeaderStyle}>配筋検査</th>
-                <th style={listHeaderStyle}>上棟</th>
-                <th style={listHeaderStyle}>ルーフィング</th>
-                <th style={listHeaderStyle}>金物検査</th>
-                <th style={listHeaderStyle}>外壁確認</th>
-                <th style={listHeaderStyle}>木完検査</th>
-                <th style={listHeaderStyle}>完了検査</th>
-                <th style={listHeaderStyle}>引渡式</th>
-                <th style={listHeaderStyle}>備考</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProjectsWithPredictions.map((project, index) => (
-                <tr 
-                  key={project.id} 
-                  style={{ 
-                    backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e3f2fd';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
-                  }}
-                  onClick={() => handleProjectClick(project.id)}
-                >
-                  <td style={listCellStyle}>{project.name}</td>
-                  <td style={listCellStyle}>{project.customer}</td>
-                  <td style={listCellStyle}>
-                    <Chip 
-                      label={project.rank} 
-                      size="small" 
-                      color={project.rank === 'A' ? 'error' : project.rank === 'B' ? 'warning' : 'default'}
-                      sx={{ fontSize: '10px', height: '18px' }}
-                    />
-                  </td>
-                  <td style={listCellStyle}>{project.progress}%</td>
-                  <td style={listCellStyle}>{project.phase}</td>
-                  <td style={listCellStyle}>{project.sales}</td>
-                  <td style={listCellStyle}>{project.design}</td>
-                  <td style={listCellStyle}>{project.ic}</td>
-                  <td style={listCellStyle}>{project.construction}</td>
-                  <td style={listCellStyle}>{getSharedItemValue(project.id, 'landStatus') || '-'}</td>
-                  
-                  {/* 主要工程の実績日程 */}
-                  <td style={listCellStyle}>{project.actualDates?.['設計申込'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['1stプラン提案'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['2ndプラン提案'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['3rdプラン提案'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['請負契約'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['1st仕様打合せ'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['2nd仕様打合せ'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['3rd仕様打合せ'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['着工前仕様確認'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['地鎮祭'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['基礎着工'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['配筋検査'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['上棟'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['ルーフィング検査'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['金物検査'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['外壁仕上がり確認'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['木完検査'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['完成検査'] || '-'}</td>
-                  <td style={listCellStyle}>{project.actualDates?.['引渡式'] || '-'}</td>
-                  <td style={listCellStyle}>-</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Box>
-      </Paper>
+    <Box sx={{ p: 3, textAlign: 'center' }}>
+      <Typography variant="h6" color="text.secondary">
+        一覧確認
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        プロジェクト詳細一覧表示機能（工事中）
+      </Typography>
     </Box>
   );
-
-  // 一覧表示用のスタイル
-  const listHeaderStyle = {
-    padding: '8px 6px',
-    backgroundColor: '#e3f2fd',
-    borderBottom: '2px solid #1976d2',
-    borderRight: '1px solid #ccc',
-    fontWeight: 'bold',
-    fontSize: '11px',
-    color: '#1565c0',
-    textAlign: 'center' as const,
-    whiteSpace: 'nowrap' as const,
-    minWidth: '80px',
-  };
-
-  const listCellStyle = {
-    padding: '6px 4px',
-    borderBottom: '1px solid #e0e0e0',
-    borderRight: '1px solid #e0e0e0',
-    fontSize: '11px',
-    textAlign: 'center' as const,
-    whiteSpace: 'nowrap' as const,
-    maxWidth: '100px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  };
 
   return (
     <Box>
