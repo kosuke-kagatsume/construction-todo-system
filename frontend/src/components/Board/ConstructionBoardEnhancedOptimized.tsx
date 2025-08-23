@@ -744,7 +744,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages.length}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
@@ -827,7 +827,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages.length}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
