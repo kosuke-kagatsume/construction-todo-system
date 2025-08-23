@@ -26,7 +26,12 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>();
+  } = useForm<LoginForm>({
+    defaultValues: {
+      email: 'admin@demo.com',
+      password: 'admin123',
+    },
+  });
 
   const onSubmit = async (data: LoginForm) => {
     console.log('Login attempt:', { email: data.email });
