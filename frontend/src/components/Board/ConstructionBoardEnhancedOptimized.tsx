@@ -750,8 +750,8 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage.id} width={60} isHeader>
-                  {stage.name}
+                <GridCell key={stage} width={60} isHeader>
+                  {stage}
                 </GridCell>
               ))}
             </GridRow>
@@ -760,15 +760,15 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
           {filteredProjectsWithPredictions.map((project) => (
             <GridRow key={project.id}>
               {allStages.map((stage) => {
-                const predictedDate = project.predictedDates?.[stage.name];
-                const actualDate = project.actualDates?.[stage.name];
+                const predictedDate = project.predictedDates?.[stage];
+                const actualDate = project.actualDates?.[stage];
                 
                 // 予測日程ボードでは予測日程のみ表示（実績がない工程のみ）
                 const shouldShowPrediction = !actualDate && predictedDate;
                 
                 return (
                   <PredictionDateCell 
-                    key={`${project.id}-${stage.id}`} 
+                    key={`${project.id}-${stage}`} 
                     width={60}
                     showPrediction={shouldShowPrediction}
                   >
@@ -833,8 +833,8 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage.id} width={60} isHeader>
-                  {stage.name}
+                <GridCell key={stage} width={60} isHeader>
+                  {stage}
                 </GridCell>
               ))}
             </GridRow>
@@ -843,14 +843,14 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
           {filteredProjectsWithPredictions.map((project) => (
             <GridRow key={project.id}>
               {allStages.map((stage) => {
-                const actualDate = project.actualDates?.[stage.name];
-                const predictedDate = project.predictedDates?.[stage.name];
+                const actualDate = project.actualDates?.[stage];
+                const predictedDate = project.predictedDates?.[stage];
                 const hasActual = actualDate && actualDate !== 'null';
                 const hasPrediction = !hasActual && predictedDate;
                 
                 return (
                   <DualModeCell 
-                    key={`${project.id}-${stage.id}`} 
+                    key={`${project.id}-${stage}`} 
                     width={60}
                     hasActual={hasActual}
                     hasPrediction={hasPrediction}
