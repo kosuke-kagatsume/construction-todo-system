@@ -764,7 +764,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 const actualDate = project.actualDates?.[stage];
                 
                 // 予測日程ボードでは予測日程のみ表示（実績がない工程のみ）
-                const shouldShowPrediction = !actualDate && predictedDate;
+                const shouldShowPrediction = Boolean(!actualDate && predictedDate);
                 
                 return (
                   <PredictionDateCell 
@@ -845,8 +845,8 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
               {allStages.map((stage) => {
                 const actualDate = project.actualDates?.[stage];
                 const predictedDate = project.predictedDates?.[stage];
-                const hasActual = actualDate && actualDate !== 'null';
-                const hasPrediction = !hasActual && predictedDate;
+                const hasActual = Boolean(actualDate && actualDate !== 'null');
+                const hasPrediction = Boolean(!hasActual && predictedDate);
                 
                 return (
                   <DualModeCell 
