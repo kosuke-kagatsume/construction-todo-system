@@ -744,13 +744,13 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${boardSettings.columnWidth * phase.stages.length}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages.length}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage.id} width={boardSettings.columnWidth} isHeader>
+                <GridCell key={stage.id} width={60} isHeader>
                   {stage.name}
                 </GridCell>
               ))}
@@ -769,7 +769,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <PredictionDateCell 
                     key={`${project.id}-${stage.id}`} 
-                    width={boardSettings.columnWidth}
+                    width={60}
                     showPrediction={shouldShowPrediction}
                   >
                     {shouldShowPrediction && (
@@ -827,13 +827,13 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         <GridTable>
           <Box style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             {phases.map((phase) => (
-              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${boardSettings.columnWidth * phase.stages.length}px` }}>
+              <PhaseHeader key={phase.id} color={phase.color} style={{ width: `${60 * phase.stages.length}px` }}>
                 {phase.name}
               </PhaseHeader>
             ))}
             <GridRow>
               {allStages.map((stage) => (
-                <GridCell key={stage.id} width={boardSettings.columnWidth} isHeader>
+                <GridCell key={stage.id} width={60} isHeader>
                   {stage.name}
                 </GridCell>
               ))}
@@ -851,7 +851,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <DualModeCell 
                     key={`${project.id}-${stage.id}`} 
-                    width={boardSettings.columnWidth}
+                    width={60}
                     hasActual={hasActual}
                     hasPrediction={hasPrediction}
                   >
