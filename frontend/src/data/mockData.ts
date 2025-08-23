@@ -203,8 +203,6 @@ const originalProjects: ProjectData[] = [
     completionDate: '2024/09/15',
     budget: 28000000,
     delayRisk: 'medium',
-    actualDates: {},
-    predictedDates: {},
     notes: 'プラン変更により若干の遅延。顧客と調整中。',
     actualDates: {},
     predictedDates: {},
