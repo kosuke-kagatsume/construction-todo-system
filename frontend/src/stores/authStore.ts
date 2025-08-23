@@ -40,8 +40,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       // トークンを保存
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
 
       // ユーザー情報を取得
       const userResponse = await api.get('/auth/me');
@@ -62,8 +64,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     // トークンを削除
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    }
     
     set({
       user: null,
@@ -72,7 +76,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   fetchUser: async () => {
-    const token = localStorage.getItem('access_token');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) {
       set({ isAuthenticated: false });
       return;
@@ -89,8 +93,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error) {
       // トークンが無効な場合はログアウト
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+      }
       
       set({
         user: null,

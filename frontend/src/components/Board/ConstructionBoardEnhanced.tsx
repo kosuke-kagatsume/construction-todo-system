@@ -146,7 +146,9 @@ const PhaseHeader = styled('div')<{ color: string }>(({ color }) => ({
   justifyContent: 'center',
 }));
 
-const DateCell = styled(GridCell)<{ isActual?: boolean; isPrediction?: boolean; isDelayed?: boolean }>(
+const DateCell = styled(GridCell, {
+  shouldForwardProp: (prop) => !['isActual', 'isPrediction', 'isDelayed'].includes(prop as string),
+})<{ isActual?: boolean; isPrediction?: boolean; isDelayed?: boolean }>(
   ({ isActual, isPrediction, isDelayed }) => ({
     backgroundColor: 
       isDelayed ? '#ffebee' :
