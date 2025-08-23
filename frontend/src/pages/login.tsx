@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
-import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 interface LoginForm {
   email: string;
@@ -20,8 +20,7 @@ interface LoginForm {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, error, isLoading, clearError } = useAuthStore();
   
   const {
     register,
@@ -30,33 +29,16 @@ export default function LoginPage() {
   } = useForm<LoginForm>();
 
   const onSubmit = async (data: LoginForm) => {
-    setError(null);
-    setIsLoading(true);
+    console.log('Login attempt:', { email: data.email });
+    clearError();
 
     try {
-      console.log('Login attempt:', { email: data.email, apiBaseURL: api.defaults.baseURL });
-      
-      // 認証リクエスト
-      const response = await api.post('/auth/login', {
-        username: data.email,
-        password: data.password,
-      });
-
-      console.log('Login response:', response.data);
-
-      // トークンを保存
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
-
-      // ホームページ（現場ボード）へリダイレクト
+      await login(data.email, data.password);
+      console.log('Login successful, redirecting to home...');
       router.push('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(
-        err.response?.data?.detail || 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-      );
-    } finally {
-      setIsLoading(false);
+      // エラーは認証ストアで管理されるため、ここでは何もしない
     }
   };
 

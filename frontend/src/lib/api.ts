@@ -3,6 +3,8 @@ import axios from 'axios';
 // 開発環境でもNext.js APIルートを使用（モックAPI）
 const API_BASE_URL = '/api';
 
+console.log('API base URL:', API_BASE_URL);
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {

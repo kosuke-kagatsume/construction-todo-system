@@ -68,24 +68,35 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log('Login API called:', { method: req.method, body: req.body });
+  console.log('Login API called:', { 
+    method: req.method, 
+    body: req.body,
+    headers: req.headers,
+    url: req.url 
+  });
   
   if (req.method !== 'POST') {
+    console.log('Invalid method:', req.method);
     return res.status(405).json({ detail: 'Method not allowed' });
   }
 
   const { username, password } = req.body;
+  console.log('Login attempt for:', { username, passwordLength: password?.length });
 
   // デモユーザーの認証
   const user = demoUsers.find(u => u.email === username && u.password === password);
 
   if (!user) {
+    console.log('User not found or invalid credentials');
     return res.status(401).json({ detail: 'Incorrect username or password' });
   }
+
+  console.log('User authenticated:', user.user.email);
 
   // モックトークンを生成（実際のJWTではない）
   const mockToken = Buffer.from(JSON.stringify(user.user)).toString('base64');
 
+  console.log('Returning tokens');
   res.status(200).json({
     access_token: mockToken,
     refresh_token: mockToken + '_refresh',

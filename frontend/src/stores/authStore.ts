@@ -30,30 +30,40 @@ export const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   login: async (email: string, password: string) => {
+    console.log('Auth store login called:', { email });
     set({ isLoading: true, error: null });
     
     try {
+      console.log('Making login request to:', '/auth/login');
       // ログインリクエスト
       const response = await api.post('/auth/login', {
         username: email,
         password: password,
       });
 
+      console.log('Login response received:', response.data);
+
       // トークンを保存
       if (typeof window !== 'undefined') {
         localStorage.setItem('access_token', response.data.access_token);
         localStorage.setItem('refresh_token', response.data.refresh_token);
+        console.log('Tokens saved to localStorage');
       }
 
       // ユーザー情報を取得
+      console.log('Fetching user info from /auth/me');
       const userResponse = await api.get('/auth/me');
+      console.log('User info received:', userResponse.data);
       
       set({
         user: userResponse.data,
         isAuthenticated: true,
         isLoading: false,
       });
+      console.log('Login completed successfully');
     } catch (error: any) {
+      console.error('Login failed:', error);
+      console.error('Error response:', error.response?.data);
       set({
         error: error.response?.data?.detail || 'ログインに失敗しました',
         isLoading: false,
