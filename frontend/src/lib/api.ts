@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-// 開発環境でもNext.js APIルートを使用（モックAPI）
-const API_BASE_URL = '/api';
+// FastAPIバックエンドとNext.js APIルートの切り替え
+const BACKEND_API_URL = 'http://localhost:8000/api/v1';
+const MOCK_API_URL = '/api';
 
-console.log('API base URL:', API_BASE_URL);
+// 環境変数またはローカル設定でバックエンド接続を制御
+const USE_BACKEND = process.env.NEXT_PUBLIC_USE_BACKEND === 'true' || false;
+const API_BASE_URL = USE_BACKEND ? BACKEND_API_URL : MOCK_API_URL;
+
+console.log('API base URL:', API_BASE_URL, '(Backend:', USE_BACKEND ? 'enabled' : 'disabled', ')');
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

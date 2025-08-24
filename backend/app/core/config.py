@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic_settings import BaseSettings
 from pydantic import validator
 
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[str] = []
     
     @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: str | List[str]) -> List[str]:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):

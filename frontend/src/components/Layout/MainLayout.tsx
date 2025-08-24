@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
 import { useAuthStore } from '@/stores/authStore';
 import { NotificationCenter } from '@/components/Notification/NotificationCenter';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 const drawerWidth = 260;
 
@@ -46,6 +47,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { user, logout } = useAuthStore();
+  
+  // Initialize WebSocket connection for real-time notifications
+  const { isConnected } = useWebSocket();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
