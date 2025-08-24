@@ -39,11 +39,24 @@ export default function LoginPage() {
 
     try {
       await login(data.email, data.password);
-      console.log('Login successful, redirecting to home...');
-      router.push('/');
+      console.log('Login successful, redirecting to dashboard...');
+      router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
       // エラーは認証ストアで管理されるため、ここでは何もしない
+    }
+  };
+
+  const handleDemoLogin = async (email: string, password: string) => {
+    console.log('Demo login attempt:', { email });
+    clearError();
+
+    try {
+      await login(email, password);
+      console.log('Demo login successful, redirecting to dashboard...');
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Demo login error:', err);
     }
   };
 
@@ -125,16 +138,51 @@ export default function LoginPage() {
           </Box>
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              デモアカウント
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              デモアカウントでクイックログイン
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              管理者: admin@demo.com / admin123<br />
-              営業: sales@demo.com / sales123<br />
-              設計: design@demo.com / design123<br />
-              IC: ic@demo.com / ic123<br />
-              工務: construction@demo.com / const123
-            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDemoLogin('admin@demo.com', 'admin123')}
+                disabled={isLoading}
+              >
+                管理者でログイン
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDemoLogin('sales@demo.com', 'sales123')}
+                disabled={isLoading}
+              >
+                営業でログイン
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDemoLogin('design@demo.com', 'design123')}
+                disabled={isLoading}
+              >
+                設計でログイン
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDemoLogin('ic@demo.com', 'ic123')}
+                disabled={isLoading}
+              >
+                ICでログイン
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDemoLogin('construction@demo.com', 'const123')}
+                disabled={isLoading}
+              >
+                工務でログイン
+              </Button>
+            </Box>
           </Box>
         </Paper>
       </Box>

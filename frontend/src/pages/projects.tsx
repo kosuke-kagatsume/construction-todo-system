@@ -33,6 +33,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Alert,
+  Divider,
 } from '@mui/material';
 import {
   Add,
@@ -53,6 +54,8 @@ import { mockProjects, phases } from '@/data/mockData';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { defaultTemplates, generateTasksFromTemplate } from '@/data/projectTemplates';
+import { excelTasks, excelPhases, tasksByRole } from '@/data/excelTaskData';
+import { Home, Description } from '@mui/icons-material';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -97,21 +100,53 @@ export default function ProjectsPage() {
   const handleCreateProject = () => {
     // テンプレートからタスクを生成
     if (selectedTemplate && newProject.startDate) {
-      const tasks = generateTasksFromTemplate(
-        selectedTemplate,
-        new Date(newProject.startDate),
-        {
-          sales: newProject.sales,
-          design: newProject.design,
-          ic: newProject.ic,
-          construction: newProject.construction,
-        }
-      );
-      console.log('Generated tasks:', tasks);
+      if (selectedTemplate === 'excel-home-construction') {
+        // Excelテンプレートからタスクを生成
+        const generatedTasks = excelTasks.map((task, index) => ({
+          id: `task-${Date.now()}-${index}`,
+          name: task.name,
+          description: task.description,
+          phase: task.phase,
+          role: task.role,
+          assignee: 
+            task.role === '営業' ? newProject.sales :
+            task.role === '設計' ? newProject.design :
+            task.role === 'IC' ? newProject.ic :
+            newProject.construction,
+          duration: task.duration,
+          requiredDays: task.requiredDays,
+          order: task.order,
+          checkpoints: task.checkpoints,
+          status: 'pending',
+          startDate: null,
+          completedDate: null,
+          predictedDate: null,
+        }));
+        console.log('Generated Excel-based tasks:', generatedTasks);
+        console.log(`Total tasks: ${generatedTasks.length}`);
+        console.log(`営業: ${generatedTasks.filter(t => t.role === '営業').length}個`);
+        console.log(`設計: ${generatedTasks.filter(t => t.role === '設計').length}個`);
+        console.log(`IC: ${generatedTasks.filter(t => t.role === 'IC').length}個`);
+        console.log(`工務: ${generatedTasks.filter(t => t.role === '工務').length}個`);
+      } else {
+        // 従来のテンプレートからタスクを生成
+        const tasks = generateTasksFromTemplate(
+          selectedTemplate,
+          new Date(newProject.startDate),
+          {
+            sales: newProject.sales,
+            design: newProject.design,
+            ic: newProject.ic,
+            construction: newProject.construction,
+          }
+        );
+        console.log('Generated tasks from default template:', tasks);
+      }
     }
     
     // TODO: API call to create project
-    console.log('Creating project:', newProject);
+    console.log('Creating project with template:', selectedTemplate);
+    console.log('Project details:', newProject);
     setOpenDialog(false);
     setTemplateStep(0);
     setSelectedTemplate('');
@@ -132,13 +167,23 @@ export default function ProjectsPage() {
   };
   
   const handleTemplateSelect = () => {
-    const template = defaultTemplates.find(t => t.id === selectedTemplate);
-    if (template) {
+    if (selectedTemplate === 'excel-home-construction') {
+      // Excelテンプレートの場合
       setNewProject({
         ...newProject,
-        productType: template.productType,
+        productType: '注文住宅（Excel準拠）',
       });
       setTemplateStep(1);
+    } else {
+      // 従来のテンプレートの場合
+      const template = defaultTemplates.find(t => t.id === selectedTemplate);
+      if (template) {
+        setNewProject({
+          ...newProject,
+          productType: template.productType,
+        });
+        setTemplateStep(1);
+      }
     }
   };
   
@@ -344,11 +389,121 @@ export default function ProjectsPage() {
                   プロジェクトの種類に応じたテンプレートを選択してください。
                   各テンプレートには標準的なタスクと工程が設定されています。
                 </Alert>
+                
+                {/* Excelテンプレートセクション */}
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Description color="primary" />
+                  Excelテンプレート
+                </Typography>
+                
                 <RadioGroup
                   value={selectedTemplate}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
                 >
                   <Grid container spacing={2}>
+                    {/* Excel家作りテンプレート */}
+                    <Grid item xs={12}>
+                      <Card 
+                        sx={{ 
+                          cursor: 'pointer',
+                          border: selectedTemplate === 'excel-home-construction' ? '2px solid' : '1px solid',
+                          borderColor: selectedTemplate === 'excel-home-construction' ? 'primary.main' : 'grey.300',
+                          transition: 'all 0.2s',
+                          backgroundColor: selectedTemplate === 'excel-home-construction' ? 'primary.light' : 'background.paper',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            transform: 'translateY(-2px)',
+                            boxShadow: 3,
+                          },
+                        }}
+                        onClick={() => setSelectedTemplate('excel-home-construction')}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                            <Radio
+                              value="excel-home-construction"
+                              checked={selectedTemplate === 'excel-home-construction'}
+                            />
+                            <Box sx={{ flex: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="h6" component="span">
+                                  🏗️ Excel家作り標準テンプレート
+                                </Typography>
+                                <Chip
+                                  label="推奨"
+                                  size="small"
+                                  color="success"
+                                />
+                                <Chip
+                                  label="Excel準拠"
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                              </Box>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Excelで管理していた家作りの全タスクを完全移行。役割別（営業・設計・IC・工務）に整理された180以上のタスクで構成。
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    標準工期: 180日
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <CheckCircle sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    タスク総数: {excelTasks.length}個
+                                  </Typography>
+                                </Box>
+                              </Box>
+                              <Box sx={{ mt: 2 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  役割別タスク数:
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                                  <Chip
+                                    label={`営業: ${tasksByRole.営業.length}個`}
+                                    size="small"
+                                    color="primary"
+                                    sx={{ height: 20, fontSize: '11px' }}
+                                  />
+                                  <Chip
+                                    label={`設計: ${tasksByRole.設計.length}個`}
+                                    size="small"
+                                    color="success"
+                                    sx={{ height: 20, fontSize: '11px' }}
+                                  />
+                                  <Chip
+                                    label={`IC: ${tasksByRole.IC.length}個`}
+                                    size="small"
+                                    color="warning"
+                                    sx={{ height: 20, fontSize: '11px' }}
+                                  />
+                                  <Chip
+                                    label={`工務: ${tasksByRole.工務.length}個`}
+                                    size="small"
+                                    color="error"
+                                    sx={{ height: 20, fontSize: '11px' }}
+                                  />
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          または従来のテンプレート
+                        </Typography>
+                      </Divider>
+                    </Grid>
+                    
+                    {/* 従来のテンプレート */}
                     {defaultTemplates.filter(t => t.isActive).map((template) => (
                       <Grid item xs={12} key={template.id}>
                         <Card 

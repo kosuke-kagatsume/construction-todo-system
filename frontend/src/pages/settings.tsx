@@ -52,7 +52,9 @@ import {
   Visibility,
   CalendarToday,
   Settings as SettingsIcon,
+  Dashboard,
 } from '@mui/icons-material';
+import { useRouter } from 'next/router';
 import { defaultTemplates } from '@/data/projectTemplates';
 import { phases } from '@/data/mockData';
 import { SharedItemsSettings } from '@/components/Settings/SharedItemsSettings';
@@ -79,6 +81,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
@@ -139,11 +142,12 @@ export default function SettingsPage() {
         </Typography>
 
         <Paper sx={{ mb: 3 }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
             <Tab icon={<Person />} label="プロフィール" />
             <Tab icon={<Business />} label="会社情報" />
             <Tab icon={<Category />} label="テンプレート" />
             <Tab icon={<SettingsIcon />} label="共有事項設定" />
+            <Tab icon={<Dashboard />} label="現場ボード表示" />
             <Tab icon={<Notifications />} label="通知設定" />
             <Tab icon={<Security />} label="セキュリティ" />
           </Tabs>
@@ -485,10 +489,242 @@ export default function SettingsPage() {
 
         {/* テンプレート管理タブ */}
         <TabPanel value={tabValue} index={2}>
+          {/* Excel テンプレート管理セクション */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Excelテンプレート管理
+            </Typography>
+            
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Excelファイルから家作りタスクテンプレートを登録・管理できます。
+              役割別（営業・設計・IC・工務）に整理されたタスクを自動でシステムに取り込みます。
+            </Alert>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Build sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
+                    <Typography variant="h6" gutterBottom>
+                      Excelテンプレート登録
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Excelファイルから新しいタスクテンプレートを登録
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      component="label"
+                    >
+                      ファイル選択
+                      <input
+                        type="file"
+                        hidden
+                        accept=".xlsx,.xls"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            console.log('Excel file selected:', file.name);
+                            // TODO: Excel解析処理
+                          }
+                        }}
+                      />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <ContentCopy sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+                    <Typography variant="h6" gutterBottom>
+                      テンプレートエクスポート
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      現在のタスク構造をExcelファイルにエクスポート
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => {
+                        console.log('Exporting template to Excel');
+                        // TODO: Excel出力処理
+                      }}
+                    >
+                      Excelダウンロード
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Category sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} />
+                    <Typography variant="h6" gutterBottom>
+                      役割別タスク統計
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      現在のタスク数を役割別に表示
+                    </Typography>
+                    <Box sx={{ textAlign: 'left' }}>
+                      <Typography variant="caption" display="block">
+                        営業: 20個 | 設計: 15個
+                      </Typography>
+                      <Typography variant="caption" display="block">
+                        IC: 10個 | 工務: 10個
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Schedule sx={{ fontSize: 48, color: 'error.main', mb: 1 }} />
+                    <Typography variant="h6" gutterBottom>
+                      テンプレート履歴
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      過去に登録したテンプレートの履歴
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                    >
+                      履歴を表示
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            {/* 登録済みExcelテンプレート一覧 */}
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">
+                    登録済みExcelテンプレート
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Add />}
+                    size="small"
+                  >
+                    新規登録
+                  </Button>
+                </Box>
+
+                <List>
+                  <ListItem>
+                    <ListItemIcon>
+                      <Build color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="家作り標準テンプレート"
+                      secondary={
+                        <Box>
+                          <Typography variant="caption" display="block">
+                            登録日: 2024/03/28 | ファイル: 修正_参考用_原本.xlsx
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            タスク総数: 180個 (営業:44, 設計:47, IC:65, 工務:24)
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <ListItemSecondaryAction>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => setExpandedTemplate(
+                            expandedTemplate === 'excel-template-1' ? null : 'excel-template-1'
+                          )}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        <IconButton size="small">
+                          <Edit />
+                        </IconButton>
+                        <IconButton size="small">
+                          <ContentCopy />
+                        </IconButton>
+                        <IconButton size="small" color="error">
+                          <Delete />
+                        </IconButton>
+                      </Box>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  
+                  {/* 展開表示 */}
+                  {expandedTemplate === 'excel-template-1' && (
+                    <Box sx={{ ml: 4, mt: 2, mb: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Card variant="outlined">
+                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                              <Typography variant="h6" color="primary">
+                                44
+                              </Typography>
+                              <Typography variant="body2">
+                                営業タスク
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Card variant="outlined">
+                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                              <Typography variant="h6" color="success.main">
+                                47
+                              </Typography>
+                              <Typography variant="body2">
+                                設計タスク
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Card variant="outlined">
+                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                              <Typography variant="h6" color="warning.main">
+                                65
+                              </Typography>
+                              <Typography variant="body2">
+                                ICタスク
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Card variant="outlined">
+                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                              <Typography variant="h6" color="error.main">
+                                24
+                              </Typography>
+                              <Typography variant="body2">
+                                工務タスク
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  )}
+                </List>
+              </CardContent>
+            </Card>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          {/* 既存のプロジェクトテンプレート */}
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                プロジェクトテンプレート
+                従来のプロジェクトテンプレート
               </Typography>
               <Button
                 variant="contained"
@@ -499,9 +735,8 @@ export default function SettingsPage() {
               </Button>
             </Box>
             
-            <Alert severity="info" sx={{ mb: 3 }}>
-              テンプレートを使用することで、プロジェクトの種類に応じた標準的なタスクセットを自動的に生成できます。
-              各テンプレートは編集・複製が可能です。
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              従来のテンプレートシステムです。新しいExcel形式への移行を推奨します。
             </Alert>
 
             <Grid container spacing={2}>
@@ -647,8 +882,29 @@ export default function SettingsPage() {
           <SharedItemsSettings />
         </TabPanel>
 
-        {/* 通知設定タブ */}
+        {/* 現場ボード表示設定タブ */}
         <TabPanel value={tabValue} index={4}>
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Dashboard sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              現場ボード表示設定
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              現場ボードの表示項目をカスタマイズできます
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<SettingsIcon />}
+              onClick={() => router.push('/board-settings')}
+            >
+              設定画面を開く
+            </Button>
+          </Box>
+        </TabPanel>
+
+        {/* 通知設定タブ */}
+        <TabPanel value={tabValue} index={5}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
@@ -821,7 +1077,7 @@ export default function SettingsPage() {
         </TabPanel>
 
         {/* セキュリティタブ */}
-        <TabPanel value={tabValue} index={5}>
+        <TabPanel value={tabValue} index={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

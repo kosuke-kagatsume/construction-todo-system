@@ -544,8 +544,8 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
         </Tabs>
       </Paper>
       
-      {/* 予測日程タブ */}
-      <TabPanel value={tabValue} index={2}>
+      {/* タスク一覧タブ */}
+      <TabPanel value={tabValue} index={0}>
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -705,176 +705,21 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
 
       {/* フェーズ別表示タブ */}
       <TabPanel value={tabValue} index={1}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {phases.map((phase) => {
-            const phaseTasks = tasks.filter(t => {
-              const stageIndex = allStages.indexOf(t.stageName);
-              let startIndex = 0;
-              for (let i = 0; i < parseInt(phase.id) - 1; i++) {
-                startIndex += phases[i].stages;
-              }
-              const endIndex = startIndex + phase.stages;
-              return stageIndex >= startIndex && stageIndex < endIndex;
-            });
-            
-            const completedCount = phaseTasks.filter(t => t.status === 'completed').length;
-            const inProgressCount = phaseTasks.filter(t => t.status === 'in_progress').length;
-            const delayedCount = phaseTasks.filter(t => t.status === 'delayed').length;
-            const phaseProgress = phaseTasks.length > 0 ? Math.round((completedCount / phaseTasks.length) * 100) : 0;
-            
-            return (
-              <Card key={phase.id} sx={{ borderLeft: `4px solid ${phase.color}` }}>
-                <CardContent>
-                  {/* フェーズヘッダー */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: phase.color }}>
-                        {phase.name}
-                      </Typography>
-                      <Chip 
-                        label={`${completedCount}/${phaseTasks.length} 完了`}
-                        size="small"
-                        sx={{ backgroundColor: phase.color + '20', color: phase.color }}
-                      />
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        進捗率:
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: phase.color }}>
-                        {phaseProgress}%
-                      </Typography>
-                    </Box>
-                  </Box>
-                  
-                  {/* 進捗バー */}
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={phaseProgress} 
-                    sx={{ 
-                      height: 10, 
-                      borderRadius: 5, 
-                      mb: 2,
-                      backgroundColor: phase.color + '20',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: phase.color,
-                      }
-                    }}
-                  />
-                  
-                  {/* ステータスサマリー */}
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Chip
-                      icon={<CheckCircle sx={{ fontSize: 16 }} />}
-                      label={`完了: ${completedCount}`}
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                    />
-                    <Chip
-                      icon={<Schedule sx={{ fontSize: 16 }} />}
-                      label={`進行中: ${inProgressCount}`}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                    <Chip
-                      icon={<Warning sx={{ fontSize: 16 }} />}
-                      label={`遅延: ${delayedCount}`}
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`未着手: ${phaseTasks.length - completedCount - inProgressCount - delayedCount}`}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-                  
-                  {/* タスクリスト */}
-                  <Box sx={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                    gap: 1.5,
-                    mt: 2
-                  }}>
-                    {phaseTasks.map((task) => (
-                      <Box 
-                        key={task.id}
-                        sx={{ 
-                          p: 1.5,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          backgroundColor: 
-                            task.status === 'completed' ? 'success.light' :
-                            task.status === 'in_progress' ? 'info.light' :
-                            task.status === 'delayed' ? 'error.light' : 
-                            'grey.50',
-                          borderLeft: `3px solid ${
-                            task.status === 'completed' ? '#4caf50' :
-                            task.status === 'in_progress' ? '#2196f3' :
-                            task.status === 'delayed' ? '#f44336' :
-                            '#e0e0e0'
-                          }`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: 2,
-                          }
-                        }}
-                        onClick={() => router.push(`/projects/${projectId}/tasks/${encodeURIComponent(task.stageName)}`)}
-                      >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: '13px' }}>
-                            {task.stageName}
-                          </Typography>
-                          <Chip
-                            label={
-                              task.status === 'completed' ? '完了' :
-                              task.status === 'in_progress' ? '進行中' :
-                              task.status === 'delayed' ? '遅延' : '未着手'
-                            }
-                            size="small"
-                            sx={{ 
-                              height: 18, 
-                              fontSize: '10px',
-                              backgroundColor: 'white',
-                              color: 
-                                task.status === 'completed' ? 'success.main' :
-                                task.status === 'in_progress' ? 'primary.main' :
-                                task.status === 'delayed' ? 'error.main' : 'text.secondary'
-                            }}
-                          />
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                          <Person sx={{ fontSize: 14, color: 'text.secondary' }} />
-                          <Typography variant="caption" color="text.secondary">
-                            {task.assignee}
-                          </Typography>
-                          {task.dueDate && (
-                            <>
-                              <Typography variant="caption" color="text.secondary">•</Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {format(new Date(task.dueDate), 'M/d')}
-                              </Typography>
-                            </>
-                          )}
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Box>
+        <Card>
+          <CardContent>
+            <Typography variant="h6" component="h2" sx={{ mb: 3, fontWeight: 'bold' }}>
+              フェーズ別進捗
+            </Typography>
+            {/* フェーズ別の内容をここに追加 */}
+            <Typography variant="body2" color="text.secondary">
+              フェーズ別の詳細表示機能を実装予定
+            </Typography>
+          </CardContent>
+        </Card>
       </TabPanel>
 
-      {/* タスク一覧タブ */}
-      <TabPanel value={tabValue} index={0}>
+      {/* 予測日程タブ */}
+      <TabPanel value={tabValue} index={2}>
         {/* タスクフィルター */}
         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <TextField
@@ -1084,203 +929,12 @@ export const ProjectDetailExcel: React.FC<{ projectId: string }> = ({ projectId 
       <TabPanel value={tabValue} index={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
-                活動履歴
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  startIcon={<Comment />}
-                  onClick={() => setNewComment('')}
-                >
-                  コメント追加
-                </Button>
-              </Box>
-            </Box>
-            
-            {/* コメント入力エリア */}
-            {newComment !== null && newComment !== undefined && (
-              <Box sx={{ mb: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  placeholder="コメントを入力..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  sx={{ mb: 2, backgroundColor: 'white' }}
-                />
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="contained" size="small">
-                    投稿
-                  </Button>
-                  <Button variant="outlined" size="small" onClick={() => setNewComment('')}>
-                    キャンセル
-                  </Button>
-                </Box>
-              </Box>
-            )}
-            
-            {/* 活動履歴リスト */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* サンプル活動履歴 */}
-              {[
-                {
-                  id: '1',
-                  type: 'status_change',
-                  user: '山田太郎',
-                  action: 'ステータスを「進行中」に変更しました',
-                  target: '基礎着工',
-                  timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2時間前
-                  icon: <Schedule />,
-                  color: 'primary.main'
-                },
-                {
-                  id: '2',
-                  type: 'comment',
-                  user: '鈴木一郎',
-                  action: 'コメントを追加しました',
-                  target: '地鎮祭準備',
-                  comment: '天候不良のため、明日に延期となりました。関係者への連絡済みです。',
-                  timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5時間前
-                  icon: <Comment />,
-                  color: 'info.main'
-                },
-                {
-                  id: '3',
-                  type: 'complete',
-                  user: '佐藤次郎',
-                  action: 'タスクを完了しました',
-                  target: '敷地調査',
-                  timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1日前
-                  icon: <CheckCircle />,
-                  color: 'success.main'
-                },
-                {
-                  id: '4',
-                  type: 'attachment',
-                  user: '田中花子',
-                  action: 'ファイルを添付しました',
-                  target: '見積提出',
-                  fileName: '見積書_20250823.pdf',
-                  timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2日前
-                  icon: <AttachFile />,
-                  color: 'secondary.main'
-                },
-                {
-                  id: '5',
-                  type: 'delay',
-                  user: 'システム',
-                  action: '遅延アラートが発生しました',
-                  target: '基礎配筋',
-                  delayDays: 3,
-                  timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3日前
-                  icon: <Warning />,
-                  color: 'error.main'
-                },
-              ].map((activity) => (
-                <Box 
-                  key={activity.id}
-                  sx={{ 
-                    display: 'flex', 
-                    gap: 2,
-                    p: 2,
-                    backgroundColor: 'grey.50',
-                    borderRadius: 1,
-                    borderLeft: `3px solid`,
-                    borderLeftColor: activity.color,
-                  }}
-                >
-                  {/* アイコン */}
-                  <Avatar 
-                    sx={{ 
-                      width: 40, 
-                      height: 40,
-                      backgroundColor: activity.color,
-                      color: 'white'
-                    }}
-                  >
-                    {React.cloneElement(activity.icon, { fontSize: 'small' })}
-                  </Avatar>
-                  
-                  {/* 内容 */}
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {activity.user}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {activity.action}
-                        </Typography>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {(() => {
-                          const now = new Date();
-                          const diff = now.getTime() - activity.timestamp.getTime();
-                          const hours = Math.floor(diff / (1000 * 60 * 60));
-                          const days = Math.floor(hours / 24);
-                          
-                          if (days > 0) {
-                            return `${days}日前`;
-                          } else if (hours > 0) {
-                            return `${hours}時間前`;
-                          } else {
-                            const minutes = Math.floor(diff / (1000 * 60));
-                            return `${minutes}分前`;
-                          }
-                        })()}
-                      </Typography>
-                    </Box>
-                    
-                    {/* ターゲット */}
-                    <Chip 
-                      label={activity.target}
-                      size="small"
-                      variant="outlined"
-                      sx={{ mb: 1 }}
-                    />
-                    
-                    {/* 追加情報 */}
-                    {activity.comment && (
-                      <Typography variant="body2" sx={{ 
-                        p: 1, 
-                        backgroundColor: 'white',
-                        borderRadius: 1,
-                        mt: 1
-                      }}>
-                        {activity.comment}
-                      </Typography>
-                    )}
-                    
-                    {activity.fileName && (
-                      <Chip
-                        icon={<AttachFile sx={{ fontSize: 16 }} />}
-                        label={activity.fileName}
-                        size="small"
-                        variant="outlined"
-                        sx={{ mt: 1 }}
-                      />
-                    )}
-                    
-                    {activity.delayDays && (
-                      <Alert severity="warning" sx={{ mt: 1 }}>
-                        {activity.delayDays}日の遅延が発生しています
-                      </Alert>
-                    )}
-                  </Box>
-                </Box>
-              ))}
-              
-              {/* もっと見るボタン */}
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Button variant="text" size="small">
-                  さらに読み込む
-                </Button>
-              </Box>
-            </Box>
+            <Typography variant="h6" component="h2" sx={{ mb: 3, fontWeight: 'bold' }}>
+              活動履歴
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              活動履歴機能を実装予定
+            </Typography>
           </CardContent>
         </Card>
       </TabPanel>

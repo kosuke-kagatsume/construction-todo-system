@@ -29,6 +29,7 @@ import { sharedItemDefinitions } from '@/data/sharedItems';
 import { sampleSharedItems } from '@/data/sharedItems';
 import { BoardColumnSettings, defaultBoardSettings } from '@/data/boardSettings';
 import { BoardSettingsDialog } from './BoardSettingsDialog';
+import { useBoardSettings } from '@/hooks/useBoardSettings';
 import { 
   Search, 
   FilterList, 
@@ -57,11 +58,11 @@ const CompactHeader = styled(Box)(({ theme }) => ({
 
 const ExcelContainer = styled(Paper)(({ theme }) => ({
   width: '100%',
-  height: 'calc(100vh - 120px)',
+  height: 'calc(100vh - 140px)',
   overflow: 'hidden',
-  borderRadius: 0,
+  borderRadius: 4,
   backgroundColor: '#ffffff',
-  boxShadow: 'none',
+  boxShadow: theme.shadows[1],
   border: '1px solid #e0e0e0',
 }));
 
@@ -77,7 +78,8 @@ const FixedColumn = styled('div')({
   zIndex: 2,
   backgroundColor: '#f8f9fa',
   borderRight: '2px solid #e0e0e0',
-  minWidth: '340px',
+  minWidth: '240px',
+  width: '240px',
   overflowY: 'auto',
   overflowX: 'hidden',
 });
@@ -87,12 +89,29 @@ const ScrollableArea = styled('div')({
   overflowX: 'auto',
   overflowY: 'auto',
   backgroundColor: '#ffffff',
+  // カスタムスクロールバー
+  '&::-webkit-scrollbar': {
+    height: '8px',
+    width: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    backgroundColor: '#f1f1f1',
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: '#c1c1c1',
+    borderRadius: '4px',
+    '&:hover': {
+      backgroundColor: '#a8a8a8',
+    },
+  },
 });
 
-const GridTable = styled('div')({
+const GridTable = styled('div')<{ totalWidth: number }>(({ totalWidth }) => ({
   display: 'inline-block',
-  minWidth: 'max-content',
-});
+  minWidth: `${totalWidth}px`,
+  width: `${totalWidth}px`,
+}));
 
 const GridRow = styled('div')({
   display: 'flex',
@@ -179,21 +198,10 @@ const PredictionDateCell = styled(GridCell, {
     justifyContent: 'center',
     fontSize: '11px',
     color: showPrediction ? '#1565c0' : '#666',
-    '&::after': showPrediction ? {
-      content: '"予"',
-      position: 'absolute',
-      top: '2px',
-      right: '2px',
-      fontSize: '9px',
-      color: '#2196f3',
-      fontWeight: 600,
-    } : {},
   })
 );
 
-const DualModeCell = styled(GridCell, {
-  shouldForwardProp: (prop) => !['hasActual', 'hasPrediction'].includes(prop as string),
-})<{ hasActual?: boolean; hasPrediction?: boolean }>(
+const DualModeCell = styled(GridCell)<{ hasActual?: boolean; hasPrediction?: boolean }>(
   ({ hasActual, hasPrediction }) => ({
     backgroundColor: hasActual ? '#f1f8e9' : hasPrediction ? '#f3f8ff' : '#ffffff',
     borderLeft: hasActual ? '2px solid #4caf50' : hasPrediction ? '2px solid #2196f3' : '1px solid #e0e0e0',
@@ -204,23 +212,6 @@ const DualModeCell = styled(GridCell, {
     fontSize: '11px',
     color: hasActual ? '#2e7d32' : hasPrediction ? '#1565c0' : '#666',
     minHeight: '30px',
-    '&::after': hasActual ? {
-      content: '"実"',
-      position: 'absolute',
-      top: '2px',
-      right: '2px',
-      fontSize: '9px',
-      color: '#4caf50',
-      fontWeight: 600,
-    } : hasPrediction ? {
-      content: '"予"',
-      position: 'absolute',
-      top: '2px',
-      right: '2px',
-      fontSize: '9px',
-      color: '#2196f3',
-      fontWeight: 600,
-    } : {},
   })
 );
 
@@ -352,9 +343,9 @@ const ProjectRow = memo(({
     style={{ cursor: 'pointer' }}
     onClick={onClick}
   >
-    <GridCell width={80} isFixed>{project.name}</GridCell>
-    <GridCell width={80} isFixed>{project.customer}</GridCell>
-    <GridCell width={50} isFixed>
+    <GridCell width={60} isFixed>{project.name}</GridCell>
+    <GridCell width={60} isFixed>{project.customer}</GridCell>
+    <GridCell width={35} isFixed>
       <Chip 
         label={project.grade} 
         size="small" 
@@ -369,12 +360,12 @@ const ProjectRow = memo(({
         }} 
       />
     </GridCell>
-    <GridCell width={50} isFixed>
-      <Typography variant="caption" sx={{ fontSize: '11px' }}>
+    <GridCell width={35} isFixed>
+      <Typography variant="caption" sx={{ fontSize: '10px' }}>
         {project.progress}%
       </Typography>
     </GridCell>
-    <GridCell width={80} isFixed>
+    <GridCell width={50} isFixed>
       <Chip
         label={project.phase}
         size="small"
@@ -406,8 +397,20 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   // 表示設定
-  const [boardSettings, setBoardSettings] = useState<BoardColumnSettings>(defaultBoardSettings);
+  const { settings: boardDisplaySettings, saveSettings } = useBoardSettings();
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  
+  // BoardColumnSettingsとBoardDisplaySettingsのマッピング
+  const boardSettings: BoardColumnSettings = {
+    visibleStages: boardDisplaySettings.visibleStages,
+    showAssignees: {
+      sales: boardDisplaySettings.roles.sales,
+      design: boardDisplaySettings.roles.design,
+      ic: boardDisplaySettings.roles.ic,
+      construction: boardDisplaySettings.roles.construction,
+    },
+    visibleSharedItems: boardDisplaySettings.visibleSharedItems,
+  };
   
   const router = useRouter();
 
@@ -538,6 +541,14 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
   
   const activeFilterCount = Object.values(filters).filter(v => v && v !== 'all').length;
 
+  // スクロール可能エリアの幅を計算
+  const calculateScrollableWidth = useCallback(() => {
+    const assigneeWidth = Object.values(boardSettings.showAssignees).filter(Boolean).length * 60;
+    const sharedItemsWidth = boardSettings.visibleSharedItems.length * 60;
+    const stageWidth = boardSettings.visibleStages.length * 50;
+    return assigneeWidth + sharedItemsWidth + stageWidth;
+  }, [boardSettings]);
+
   // 共有事項の値を取得
   const getSharedItemValue = useCallback((projectId: string, itemId: string) => {
     const item = sampleSharedItems.items[itemId];
@@ -565,15 +576,15 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
     <ExcelGrid>
       <FixedColumn>
         <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
-          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
+          <PhaseHeader color="#666" style={{ width: '240px', borderBottom: '1px solid #d0d0d0' }}>
             概要
           </PhaseHeader>
           <GridRow>
-            <GridCell width={80} isHeader>邸名</GridCell>
-            <GridCell width={80} isHeader>顧客名</GridCell>
-            <GridCell width={50} isHeader>ランク</GridCell>
-            <GridCell width={50} isHeader>進捗</GridCell>
-            <GridCell width={80} isHeader>フェーズ</GridCell>
+            <GridCell width={60} isHeader>邸名</GridCell>
+            <GridCell width={60} isHeader>顧客名</GridCell>
+            <GridCell width={35} isHeader>ランク</GridCell>
+            <GridCell width={35} isHeader>進捗</GridCell>
+            <GridCell width={50} isHeader>フェーズ</GridCell>
           </GridRow>
         </Box>
         {filteredProjectsWithPredictions.map((project) => (
@@ -588,7 +599,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
       </FixedColumn>
 
       <ScrollableArea>
-        <GridTable>
+        <GridTable totalWidth={calculateScrollableWidth()}>
           <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 1 }}>
             {/* 共通事項ヘッダー */}
             {(Object.values(boardSettings.showAssignees).some(Boolean) || boardSettings.visibleSharedItems.length > 0) && (
@@ -597,7 +608,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 style={{ 
                   width: `${
                     Object.values(boardSettings.showAssignees).filter(Boolean).length * 60 +
-                    boardSettings.visibleSharedItems.length * 80
+                    boardSettings.visibleSharedItems.length * 60
                   }px` 
                 }}
               >
@@ -620,7 +631,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 <PhaseHeader
                   key={phase.id}
                   color={phase.color}
-                  style={{ width: `${visibleStageCount * 80}px` }}
+                  style={{ width: `${visibleStageCount * 50}px` }}
                 >
                   {phase.name}
                 </PhaseHeader>
@@ -630,16 +641,16 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
 
           <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
             {/* 担当者列 */}
-            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
-            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
-            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
-            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
+            {boardSettings.showAssignees.sales && <GridCell width={60} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={60} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={60} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={60} isHeader>工務</GridCell>}
             
             {/* 共有事項列 */}
             {boardSettings.visibleSharedItems.map(itemId => {
               const itemDef = sharedItemDefinitions.find(d => d.id === itemId);
               return itemDef ? (
-                <GridCell key={itemId} width={80} isHeader>
+                <GridCell key={itemId} width={60} isHeader>
                   {itemDef.name}
                 </GridCell>
               ) : null;
@@ -647,8 +658,10 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             
             {/* ステージ列 */}
             {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => (
-              <GridCell key={stage} width={60} isHeader>
-                {stage}
+              <GridCell key={stage} width={50} isHeader>
+                <Typography variant="caption" sx={{ fontSize: '10px', textAlign: 'center' }}>
+                  {stage.length > 6 ? stage.substring(0, 6) + '...' : stage}
+                </Typography>
               </GridCell>
             ))}
           </GridRow>
@@ -661,28 +674,28 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             >
               {/* 担当者データ */}
               {boardSettings.showAssignees.sales && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.sales}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.design && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.design}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.ic && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.ic}
                   </Typography>
                 </GridCell>
               )}
               {boardSettings.showAssignees.construction && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   <Typography variant="caption" sx={{ fontSize: '10px' }}>
                     {project.construction}
                   </Typography>
@@ -693,7 +706,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
               {boardSettings.visibleSharedItems.map(itemId => {
                 const value = getSharedItemValue(project.id, itemId);
                 return (
-                  <GridCell key={itemId} width={80}>
+                  <GridCell key={itemId} width={60}>
                     <Typography variant="caption" sx={{ fontSize: '10px' }}>
                       {value !== null ? String(value) : '-'}
                     </Typography>
@@ -715,7 +728,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <DateCell
                     key={stage}
-                    width={80}
+                    width={50}
                     isActual={!!date && date !== 'null'}
                   >
                     {formattedDate}
@@ -735,15 +748,15 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
     <ExcelGrid>
       <FixedColumn>
         <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
-          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
+          <PhaseHeader color="#666" style={{ width: '240px', borderBottom: '1px solid #d0d0d0' }}>
             概要
           </PhaseHeader>
           <GridRow>
-            <GridCell width={80} isHeader>邸名</GridCell>
-            <GridCell width={80} isHeader>顧客名</GridCell>
-            <GridCell width={50} isHeader>ランク</GridCell>
-            <GridCell width={50} isHeader>進捗</GridCell>
-            <GridCell width={80} isHeader>フェーズ</GridCell>
+            <GridCell width={60} isHeader>邸名</GridCell>
+            <GridCell width={60} isHeader>顧客名</GridCell>
+            <GridCell width={35} isHeader>ランク</GridCell>
+            <GridCell width={35} isHeader>進捗</GridCell>
+            <GridCell width={50} isHeader>フェーズ</GridCell>
           </GridRow>
         </Box>
         {filteredProjectsWithPredictions.map((project) => (
@@ -758,7 +771,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
       </FixedColumn>
       
       <ScrollableArea>
-        <GridTable>
+        <GridTable totalWidth={calculateScrollableWidth()}>
           <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 1 }}>
             {/* 共通事項ヘッダー */}
             {(Object.values(boardSettings.showAssignees).some(Boolean) || boardSettings.visibleSharedItems.length > 0) && (
@@ -766,8 +779,8 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 color="#666"
                 style={{ 
                   width: `${
-                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 80 +
-                    boardSettings.visibleSharedItems.length * 80
+                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 60 +
+                    boardSettings.visibleSharedItems.length * 60
                   }px` 
                 }}
               >
@@ -790,7 +803,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 <PhaseHeader
                   key={phase.id}
                   color={phase.color}
-                  style={{ width: `${visibleStageCount * 80}px` }}
+                  style={{ width: `${visibleStageCount * 50}px` }}
                 >
                   {phase.name}
                 </PhaseHeader>
@@ -800,16 +813,16 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
 
           <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
             {/* 担当者列 */}
-            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
-            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
-            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
-            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
+            {boardSettings.showAssignees.sales && <GridCell width={60} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={60} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={60} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={60} isHeader>工務</GridCell>}
             
             {/* 共有事項列 */}
             {boardSettings.visibleSharedItems.map(itemId => {
               const itemDef = sharedItemDefinitions.find(d => d.id === itemId);
               return itemDef ? (
-                <GridCell key={itemId} width={80} isHeader>
+                <GridCell key={itemId} width={60} isHeader>
                   {itemDef.name}
                 </GridCell>
               ) : null;
@@ -817,8 +830,10 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             
             {/* ステージ列 */}
             {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => (
-              <GridCell key={stage} width={80} isHeader>
-                {stage}
+              <GridCell key={stage} width={50} isHeader>
+                <Typography variant="caption" sx={{ fontSize: '10px', textAlign: 'center' }}>
+                  {stage.length > 6 ? stage.substring(0, 6) + '...' : stage}
+                </Typography>
               </GridCell>
             ))}
           </GridRow>
@@ -827,29 +842,29 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             <GridRow key={project.id}>
               {/* 担当者列 */}
               {boardSettings.showAssignees.sales && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.sales || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.design && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.design || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.ic && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.ic || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.construction && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.construction || '-'}
                 </GridCell>
               )}
               
               {/* 共有事項列 */}
               {boardSettings.visibleSharedItems.map(itemId => (
-                <GridCell key={itemId} width={80}>
+                <GridCell key={itemId} width={60}>
                   {getSharedItemValue(project.id, itemId) || '-'}
                 </GridCell>
               ))}
@@ -865,7 +880,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <PredictionDateCell 
                     key={`${project.id}-${stage}`} 
-                    width={80}
+                    width={50}
                     showPrediction={shouldShowPrediction}
                   >
                     {shouldShowPrediction && predictedDate ? 
@@ -887,15 +902,15 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
     <ExcelGrid>
       <FixedColumn>
         <Box style={{ position: 'sticky', top: 0, zIndex: 3 }}>
-          <PhaseHeader color="#666" style={{ width: '340px', borderBottom: '1px solid #d0d0d0' }}>
+          <PhaseHeader color="#666" style={{ width: '240px', borderBottom: '1px solid #d0d0d0' }}>
             概要
           </PhaseHeader>
           <GridRow>
-            <GridCell width={80} isHeader>邸名</GridCell>
-            <GridCell width={80} isHeader>顧客名</GridCell>
-            <GridCell width={50} isHeader>ランク</GridCell>
-            <GridCell width={50} isHeader>進捗</GridCell>
-            <GridCell width={80} isHeader>フェーズ</GridCell>
+            <GridCell width={60} isHeader>邸名</GridCell>
+            <GridCell width={60} isHeader>顧客名</GridCell>
+            <GridCell width={35} isHeader>ランク</GridCell>
+            <GridCell width={35} isHeader>進捗</GridCell>
+            <GridCell width={50} isHeader>フェーズ</GridCell>
           </GridRow>
         </Box>
         {filteredProjectsWithPredictions.map((project) => (
@@ -910,7 +925,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
       </FixedColumn>
       
       <ScrollableArea>
-        <GridTable>
+        <GridTable totalWidth={calculateScrollableWidth()}>
           <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 1 }}>
             {/* 共通事項ヘッダー */}
             {(Object.values(boardSettings.showAssignees).some(Boolean) || boardSettings.visibleSharedItems.length > 0) && (
@@ -918,8 +933,8 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 color="#666"
                 style={{ 
                   width: `${
-                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 80 +
-                    boardSettings.visibleSharedItems.length * 80
+                    Object.values(boardSettings.showAssignees).filter(Boolean).length * 60 +
+                    boardSettings.visibleSharedItems.length * 60
                   }px` 
                 }}
               >
@@ -942,7 +957,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 <PhaseHeader
                   key={phase.id}
                   color={phase.color}
-                  style={{ width: `${visibleStageCount * 80}px` }}
+                  style={{ width: `${visibleStageCount * 50}px` }}
                 >
                   {phase.name}
                 </PhaseHeader>
@@ -952,16 +967,16 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
 
           <GridRow style={{ position: 'sticky', top: 24, zIndex: 1 }}>
             {/* 担当者列 */}
-            {boardSettings.showAssignees.sales && <GridCell width={80} isHeader>営業</GridCell>}
-            {boardSettings.showAssignees.design && <GridCell width={80} isHeader>設計</GridCell>}
-            {boardSettings.showAssignees.ic && <GridCell width={80} isHeader>IC</GridCell>}
-            {boardSettings.showAssignees.construction && <GridCell width={80} isHeader>工務</GridCell>}
+            {boardSettings.showAssignees.sales && <GridCell width={60} isHeader>営業</GridCell>}
+            {boardSettings.showAssignees.design && <GridCell width={60} isHeader>設計</GridCell>}
+            {boardSettings.showAssignees.ic && <GridCell width={60} isHeader>IC</GridCell>}
+            {boardSettings.showAssignees.construction && <GridCell width={60} isHeader>工務</GridCell>}
             
             {/* 共有事項列 */}
             {boardSettings.visibleSharedItems.map(itemId => {
               const itemDef = sharedItemDefinitions.find(d => d.id === itemId);
               return itemDef ? (
-                <GridCell key={itemId} width={80} isHeader>
+                <GridCell key={itemId} width={60} isHeader>
                   {itemDef.name}
                 </GridCell>
               ) : null;
@@ -969,8 +984,10 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             
             {/* ステージ列 */}
             {allStages.filter(stage => boardSettings.visibleStages.includes(stage)).map((stage) => (
-              <GridCell key={stage} width={80} isHeader>
-                {stage}
+              <GridCell key={stage} width={50} isHeader>
+                <Typography variant="caption" sx={{ fontSize: '10px', textAlign: 'center' }}>
+                  {stage.length > 6 ? stage.substring(0, 6) + '...' : stage}
+                </Typography>
               </GridCell>
             ))}
           </GridRow>
@@ -979,29 +996,29 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
             <GridRow key={project.id}>
               {/* 担当者列 */}
               {boardSettings.showAssignees.sales && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.sales || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.design && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.design || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.ic && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.ic || '-'}
                 </GridCell>
               )}
               {boardSettings.showAssignees.construction && (
-                <GridCell width={80}>
+                <GridCell width={60}>
                   {project.construction || '-'}
                 </GridCell>
               )}
               
               {/* 共有事項列 */}
               {boardSettings.visibleSharedItems.map(itemId => (
-                <GridCell key={itemId} width={80}>
+                <GridCell key={itemId} width={60}>
                   {getSharedItemValue(project.id, itemId) || '-'}
                 </GridCell>
               ))}
@@ -1016,7 +1033,7 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
                 return (
                   <DualModeCell 
                     key={`${project.id}-${stage}`} 
-                    width={80}
+                    width={50}
                     hasActual={hasActual}
                     hasPrediction={hasPrediction}
                   >
@@ -1239,12 +1256,14 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
           </IconButton>
           
           {/* 設定ボタン */}
-          <IconButton
-            size="small"
-            onClick={() => setSettingsDialogOpen(true)}
-          >
-            <Settings />
-          </IconButton>
+          <Tooltip title="現場ボード表示設定">
+            <IconButton
+              size="small"
+              onClick={() => setSettingsDialogOpen(true)}
+            >
+              <Settings />
+            </IconButton>
+          </Tooltip>
           
           {/* 検索フィールド */}
           <TextField
@@ -1338,7 +1357,19 @@ export const ConstructionBoardEnhancedOptimized: React.FC = () => {
         onClose={() => setSettingsDialogOpen(false)}
         settings={boardSettings}
         onSave={(newSettings) => {
-          setBoardSettings(newSettings);
+          // BoardColumnSettingsからBoardDisplaySettingsに変換して保存
+          const newDisplaySettings = {
+            ...boardDisplaySettings,
+            roles: {
+              sales: newSettings.showAssignees.sales,
+              design: newSettings.showAssignees.design,
+              ic: newSettings.showAssignees.ic,
+              construction: newSettings.showAssignees.construction,
+            },
+            visibleSharedItems: newSettings.visibleSharedItems,
+            visibleStages: newSettings.visibleStages,
+          };
+          saveSettings(newDisplaySettings);
           setSettingsDialogOpen(false);
         }}
       />

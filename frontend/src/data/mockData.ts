@@ -777,11 +777,12 @@ export const mockProjects: ProjectData[] = originalProjects.map(project => {
   
   return {
     ...project,
-    actualDates: project.actualDates || actualDates, // 既存データがあればそれを優先
-    predictedDates: project.predictedDates || predictedDates,
+    // Always use generated data for consistent prediction calculation
+    actualDates: actualDates,
+    predictedDates: predictedDates,
     stages: convertToNewStages(project.stages)
   };
-});
+});;
 
 // フェーズとステージの定義
 export const phases = [
@@ -798,12 +799,12 @@ export const allStages = [
   // 契約（3ステージ）
   '契約前打合せ', '請負契約', '建築請負契約',
   // 打ち合わせ（11ステージ）
-  '1st仕様', '2nd仕様', '3rd仕様', '4th仕様', '5th仕様', '仕様決定', '図面承認', '建築確認申請', '着工前準備', '地鎮祭準備', '地鎮祭',
+  '1st仕様打合せ', '2nd仕様打合せ', '3rd仕様打合せ', '4th仕様打合せ', '5th仕様打合せ', '仕様決定', '図面承認', '建築確認申請', '着工前準備', '地鎮祭準備', '地鎮祭',
   // 施工（18ステージ）
   '地盤改良', '基礎着工', '基礎配筋検査', '基礎完了', '土台敷き', '上棟', '上棟式', '屋根工事', '外装工事', '内装下地', '内装仕上げ', '設備工事', '外構工事', '美装工事', '社内検査', '是正工事', '竣工検査', '完了検査',
   // 竣工（4ステージ）
   '取扱説明', '引き渡し準備', '引き渡し', 'アフター点検'
-];
+];;
 
 // タスクの所要時間設定（営業日数）
 const taskDurations: { [key: string]: number } = {
@@ -818,11 +819,11 @@ const taskDurations: { [key: string]: number } = {
   '契約前打合せ': 2,
   '請負契約': 3,
   '建築請負契約': 1,
-  '1st仕様': 3,
-  '2nd仕様': 3,
-  '3rd仕様': 3,
-  '4th仕様': 3,
-  '5th仕様': 3,
+  '1st仕様打合せ': 3,
+  '2nd仕様打合せ': 3,
+  '3rd仕様打合せ': 3,
+  '4th仕様打合せ': 3,
+  '5th仕様打合せ': 3,
   '仕様決定': 2,
   '図面承認': 3,
   '建築確認申請': 7,
@@ -851,7 +852,7 @@ const taskDurations: { [key: string]: number } = {
   '引き渡し準備': 2,
   '引き渡し': 1,
   'アフター点検': 1,
-};
+};;
 
 // 営業日を計算するヘルパー関数
 const addBusinessDays = (date: Date, days: number): Date => {

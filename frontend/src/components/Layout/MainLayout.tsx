@@ -65,7 +65,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const menuItems = [
     { text: 'ダッシュボード', icon: <Dashboard />, path: '/dashboard' },
-    { text: '現場ボード', icon: <Business />, path: '/' },
+    { text: '現場ボード', icon: <Business />, path: '/board' },
     { text: 'マイタスク', icon: <Assignment />, path: '/my-tasks' },
     { text: 'プロジェクト', icon: <People />, path: '/projects' },
     { text: '設定', icon: <Settings />, path: '/settings' },
