@@ -69,6 +69,7 @@ import { mockProjects } from '@/data/mockData';
 import { excelTasks, tasksByRole } from '@/data/excelTaskData';
 import { useRouter } from 'next/router';
 import { hasChecksheet, getChecksheetProgress } from '@/data/checksheets';
+import { notificationHelpers } from '@/utils/notificationHelpers';
 
 // 役割別のカラー定義
 const ROLE_COLORS = {
@@ -444,13 +445,34 @@ export default function DashboardPage() {
                   <Warning color="error" />
                   ボトルネック分析
                 </Typography>
-                <Button
-                  size="small"
-                  startIcon={<Assessment />}
-                  onClick={() => router.push('/analytics')}
-                >
-                  詳細分析
-                </Button>
+                <Box display="flex" gap={1}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Refresh />}
+                    onClick={() => {
+                      const demos = [
+                        () => notificationHelpers.taskAssigned('基礎工事チェック', '田中様邸新築工事', '山田太郎'),
+                        () => notificationHelpers.taskDeadline('実施設計図書作成', '佐藤様邸新築工事', 12),
+                        () => notificationHelpers.stageDelayed('上棟', '鈴木様邸新築工事', 3, '資材納期遅延'),
+                        () => notificationHelpers.handoffRequest('設計', 'IC', '高橋様邸新築工事', 5),
+                        () => notificationHelpers.bottleneckAlert('IC', '配線計画', 4, 'high'),
+                        () => notificationHelpers.projectMilestone('基礎着工', '伊藤様邸新築工事', 3),
+                      ];
+                      const random = demos[Math.floor(Math.random() * demos.length)];
+                      random();
+                    }}
+                  >
+                    通知テスト
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<Assessment />}
+                    onClick={() => router.push('/analytics')}
+                  >
+                    詳細分析
+                  </Button>
+                </Box>
               </Box>
               <Grid container spacing={2}>
                 {bottlenecks.map((bottleneck, index) => (

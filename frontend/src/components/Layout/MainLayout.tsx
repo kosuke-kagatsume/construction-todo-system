@@ -4,6 +4,7 @@ import { Dashboard, Assignment, People, Settings, Menu as MenuIcon, Notification
 import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
 import { useAuthStore } from '@/stores/authStore';
+import { NotificationCenter } from '@/components/Notification/NotificationCenter';
 
 const drawerWidth = 260;
 
@@ -232,13 +233,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <Add />
               </IconButton>
             </Tooltip>
-            <Tooltip title="通知">
-              <IconButton color="inherit">
-                <Badge badgeContent={3} color="error">
-                  <Notifications />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            <NotificationCenter />
             <Tooltip title="アカウント">
               <IconButton color="inherit" onClick={handleMenu}>
                 <AccountCircle />
